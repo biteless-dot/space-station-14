@@ -1,0 +1,33 @@
+- type: entity
+  id: BaseArmorUpgrade
+  parent: BaseItem
+  name: armor upgrade kit
+  description: A pile of components for improving armor.
+  abstract: true
+  components:
+  - type: Sprite
+    sprite: Objects/Tools/upgrade.rsi
+  - type: Item
+    size: Small
+  - type: ArmorUpgrade
+  - type: StaticPrice
+    price: 750
+  - type: Tag
+    - ArmorUpgrade
+
+- type: entity
+  id: ArmorUpgradeGoliath
+  parent: BaseArmorUpgrade
+  name: goliath upgrade kit
+  description: For application to the outside of hardsuits, sturdy and acidproof!
+  components:
+  - type: ArmorUpgrade
+    tags: [ArmorUpgradeSurface]
+    examineText: armor-upgrade-examine-text-goliath
+    titleChanges:
+      suffix: goliath
+    overlaySprites:
+      enum.SpriteLocation.Head: Textures\_Starlight\Clothing\Head\Hardsuits\goliathupgradehelm.rsi
+      enum.SpriteLocation.OuterClothing: Textures\_Starlight\Clothing\OuterClothing\Hardsuits\goliathupgrade.rsi
+
+  

@@ -1,0 +1,1 @@
+armor-upgrade-examine-text-goliath = Reinforced with [color=#D30000][bold]goliath scales.[/bold][/color]
