@@ -17,19 +17,19 @@ public sealed partial class ArmorUpgradeComponent : Component
     /// <summary>
     /// Tags used to ensure mutually exclusive upgrades and duplicates are not stacked.
     /// </summary>
-    [DataField("tags")]
+    [DataField]
     public List<ProtoId<TagPrototype>> Tags = new();
 
     /// <summary>
     /// Markup added to the item when this upgrade is applied.
     /// </summary>
-    [DataField("examineText")]
+    [DataField]
     public LocId ExamineText;
 
     /// <summary>
     /// Markup added to the title of the item when this upgrade is applied.
     /// </summary>
-    [DataField("titleChanges")]
+    [DataField]
     public TitleChangeType? TitleChanges;
 }
 
@@ -40,12 +40,12 @@ public sealed partial class TitleChangeType
     /// <summary>
     /// If indicated, will be added after the items title, after a comma.
     /// </summary>
-    [DataField("suffix")]
+    [DataField]
     public LocId? Suffix = null;
 
     /// <summary>
     /// If indicated, will be added before the title.
     /// </summary>
-    [DataField("prefix")]
+    [DataField]
     public LocId? Prefix = null;
 }
