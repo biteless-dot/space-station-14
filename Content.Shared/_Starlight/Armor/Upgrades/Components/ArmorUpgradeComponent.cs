@@ -41,11 +41,11 @@ public sealed partial class TitleChangeType
     /// If indicated, will be added after the items title, after a comma.
     /// </summary>
     [DataField]
-    public LocId? Suffix = null;
+    public string? Suffix = null;
 
     /// <summary>
     /// If indicated, will be added before the title.
     /// </summary>
     [DataField]
-    public LocId? Prefix = null;
+    public string? Prefix = null;
 }
