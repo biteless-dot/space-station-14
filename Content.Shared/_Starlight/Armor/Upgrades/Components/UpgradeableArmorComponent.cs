@@ -36,13 +36,13 @@ public sealed partial class UpgradeableArmorComponent : Component
     /// The name of the container this upgrade goes into.
     /// </summary>
     [DataField]
-    public string? UpgradesContainerId = "upgrades";
+    public string UpgradesContainerId = "upgrades";
 
     /// <summary>
     /// How many upgrades of the same tag can be fitted.
     /// By default, this is set to 1 on every whitelisted tag.
     /// </summary>
     [DataField]
-    public Dictionary<ProtoId<TagPrototype>, int>? UpgradesPerTag = new();
+    public Dictionary<ProtoId<TagPrototype>, int> UpgradesPerTag = new();
 
 }

@@ -13,6 +13,7 @@
   - type: StaticPrice
     price: 750
   - type: Tag
+    tags:
     - ArmorUpgrade
 
 - type: entity
@@ -27,7 +28,9 @@
     titleChanges:
       suffix: goliath
     overlaySprites:
-      enum.SpriteLocation.Head: Textures\_Starlight\Clothing\Head\Hardsuits\goliathupgradehelm.rsi
-      enum.SpriteLocation.OuterClothing: Textures\_Starlight\Clothing\OuterClothing\Hardsuits\goliathupgrade.rsi
+    - location: Head
+      sprite: _Starlight/Clothing/Head/Hardsuits/goliathupgradehelm.rsi
+    - location: OuterClothing
+      sprite: _Starlight/Clothing/OuterClothing/Hardsuits/goliathupgrade.rsi
 
   

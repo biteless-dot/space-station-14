@@ -16,10 +16,10 @@ namespace Content.Shared.Armor.Upgrades.Components;
 public sealed partial class ArmorUpgradeComponent : Component
 {
     /// <summary>
-    /// Tags used to ensure mutually exclusive upgrades and duplicates are not stacked.
+    /// Tag used to ensure mutually exclusive upgrades and duplicates are not stacked.
     /// </summary>
     [DataField]
-    public List<ProtoId<TagPrototype>> Tags = new();
+    public ProtoId<TagPrototype> Tag = new();
 
     /// <summary>
     /// Markup added to the item when this upgrade is applied.
@@ -48,7 +48,7 @@ public sealed partial class ArmorUpgradeComponent : Component
     /// The reason for specifying sprite-location is for clothing with
     /// toggleable components, such as hardsuits.
     [DataField]
-    public Dictionary<SpriteLocation, SpriteSpecifier>? OverlaySprites = new();
+    public List<OverlaySprite>? OverlaySprites = new();
 }
 
 [DataDefinition]
@@ -67,7 +67,16 @@ public sealed partial class TitleChangeType
     public string? Prefix = null;
 }
 
-public enum SpriteLocation
+[DataDefinition]
+public sealed partial class OverlaySprite
+{
+    [DataField]
+    public SpriteLocations Location = SpriteLocations.Universal;
+
+    [DataField]
+    public SpriteSpecifier Sprite; 
+}
+public enum SpriteLocations
 {
     Universal = 0,
     Back = 1,

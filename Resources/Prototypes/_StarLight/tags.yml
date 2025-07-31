@@ -168,3 +168,9 @@
 
 - type: Tag
   id: DockEscape
+
+- type: Tag
+  id: ArmorUpgrade
+
+- type: Tag
+  id: ArmorUpgradeSurface
