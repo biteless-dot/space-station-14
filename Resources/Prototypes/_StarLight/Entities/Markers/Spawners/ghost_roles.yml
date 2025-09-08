@@ -21,3 +21,62 @@
     - state: green
     - sprite: Mobs/Silicon/Chassis/derelict.rsi
       state: derelict_icon
+
+# Scavenger Antag
+# copy from nukeops Resources/Prototypes/Entities/Markers/Spawners/ghost_roles.yml
+- type: entity
+  categories: [ HideSpawnMenu, Spawner ]
+  parent: BaseAntagSpawner
+  id: SpawnPointLoneScavenger
+  components:
+    - type: GhostRole
+      name: ghost-role-information-scavenger-name
+      description: ghost-role-information-scavenger-description
+      rules: ghost-role-information-scavenger-rules
+      mindRoles:
+        - MindRoleGhostRoleSoloAntagonist
+      requirements:
+        - !type:OverallPlaytimeRequirement
+          time: 86400 # 24h STARLIGHT
+        - !type:DepartmentTimeRequirement
+          department: Security
+          time: 21600 # 6h STARLIGHT
+    - type: Sprite
+      sprite: Markers/jobs.rsi
+      layers:
+        - state: green
+        - sprite: Structures/Wallmounts/signs.rsi
+          state: danger
+
+- type: entity
+  categories: [ HideSpawnMenu, Spawner ]
+  parent: SpawnPointLoneScavenger
+  id: SpawnPointScavengerBoss
+  components:
+    - type: GhostRole
+      name: roles-antag-scavenger-boss-name
+      description: roles-antag-scavenger-boss-objective
+      rules: ghost-role-information-rules-default-team-antagonist
+      mindRoles:
+        - MindRoleGhostRoleTeamAntagonist
+      requirements:
+        - !type:OverallPlaytimeRequirement
+          time: 86400 # 24h STARLIGHT
+        - !type:DepartmentTimeRequirement
+          department: Security
+          time: 43200 # 12h STARLIGHT
+        - !type:DepartmentTimeRequirement
+          department: Command
+          time: 21600 # 6h STARLIGHT
+
+- type: entity
+  categories: [ HideSpawnMenu, Spawner ]
+  parent: SpawnPointLoneScavenger
+  id: SpawnPointScavenger
+  components:
+    - type: GhostRole
+      name: roles-antag-scavenger-name
+      description: roles-antag-scavenger-objective
+      rules: ghost-role-information-rules-default-team-antagonist
+      mindRoles:
+        - MindRoleGhostRoleTeamAntagonist

@@ -13,3 +13,7 @@ ghost-role-information-soviet-marine-rules = You are required to obey orders giv
 
 ghost-role-information-derelict-borgi-name = Derelict Borgi
 ghost-role-information-derelict-borgi-desc = You are a regular borgi that got lost in space. After years of exposure to ion storms you find yourself near a space station.
+
+ghost-role-information-scavenger-name = Scavenger
+ghost-role-information-scavenger-description = You are a lone scavenger. Plunder the station!
+ghost-role-information-scavenger-rules = You are a [color={role-type-team-antagonist-color}][bold]{role-type-solo-antagonist-name}[/bold][/color]. Everyone stands between you and your treasure.

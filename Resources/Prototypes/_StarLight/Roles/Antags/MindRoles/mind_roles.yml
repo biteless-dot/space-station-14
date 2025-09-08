@@ -7,3 +7,24 @@
     exclusiveAntag: true
     antagPrototype: LoneAbductorAntag
   - type: Abductor
+
+# Scavengers
+- type: entity
+  parent: BaseMindRoleAntag
+  id: MindRoleScavenger
+  name: Scavenger Role
+  components:
+    - type: MindRole
+      roleType: TeamAntagonist
+      subtype: role-subtype-scavenger
+      exclusiveAntag: true
+      antagPrototype: Scavenger
+    - type: NukeopsRole # DOTS - replace with new component for scavengers?
+
+- type: entity
+  parent: MindRoleScavenger
+  id: MindRoleScavengerBoss
+  name: Scavenger Boss Role
+  components:
+    - type: MindRole
+      antagPrototype: ScavengerBoss

@@ -248,3 +248,14 @@
   loadouts:
   - CombatBoots
   - HighHeelBootsFilled
+
+- type: loadoutGroup # DOTS - update this
+  id: SurvivalScavenger
+  name: loadout-group-survival-scavenger
+  minLimit: 2
+  hidden: true
+  loadouts:
+    - EmergencyNitrogenSyndicate
+    - EmergencyOxygenSyndicate
+    - LoadoutSpeciesVoxNitrogen
+    - EmergencyNonBreatherSyndicate

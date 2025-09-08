@@ -116,3 +116,10 @@
     - Trinkets
     - SecurityStar
     - GroupSpeciesBreathToolSecurity
+
+- type: roleLoadout
+  id: RoleSurvivalScavenger
+  groups:
+    - SurvivalScavenger
+    - GroupSpeciesBreathTool
+    - GroupPocketTankDouble

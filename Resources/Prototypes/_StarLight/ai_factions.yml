@@ -156,3 +156,8 @@
   id: PointDefenseWeapon
   hostile:
   - PointDefenseTarget
+
+- type: npcFaction # DOTS - hostile against all human factions? syndicate + syndicate hostile?
+  id: Scavengers
+  #hostile:
+  #  - 

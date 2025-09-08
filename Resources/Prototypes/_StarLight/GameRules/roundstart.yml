@@ -36,3 +36,77 @@
     rules:
     - id: Thief
       prob: 1
+
+# Scavenger Antag
+# copy nukeops from Resources/Prototypes/GameRules/roundstart.yml
+- type: entity
+  abstract: true
+  parent: BaseGameRule
+  id: BaseScavengerRule
+  components:
+    - type: RandomMetadata #this generates the random operation name cuz it's cool.
+      nameSegments:
+        - NamesOperationPrefix
+        - NamesOperationSuffix
+      nameFormat: name-format-nuclear-operation
+#    - type: NukeopsRule
+    - type: RuleGrids
+    - type: AntagSelection
+    - type: AntagLoadProfileRule
+      speciesOverride: Human
+      speciesOverrideBlacklist:
+      #Species that do not work with nukies should be included in this list.
+      #Once the issues are fixed the species should be removed from this list to be enabled.
+      #Balance concerns are not a valid reason to disable a species, except for high-impact Nukie-specific exploits.
+      #- Vox
+
+- type: entity
+  parent: BaseScavengerRule
+  id: Scavengers
+  components:
+    - type: GameRule
+      minPlayers: 20
+#    - type: LoadMapRule
+#      mapPath: /Maps/_Starlight/nukieplanet.yml
+    - type: RuleGrids
+    - type: LoadMapRule
+      gridPath: /Maps/_Starlight/Shuttles/scavshuttle.yml #scav infil
+    - type: AntagSelection
+      selectionTime: PrePlayerSpawn
+      definitions:
+        - prefRoles: [ ScavengerBoss ]
+          fallbackRoles: [ Scavenger ]
+          spawnerPrototype: SpawnPointScavengerBoss
+          startingGear: ScavengerBossGearFull
+          roleLoadout:
+            - RoleSurvivalScavenger
+          components:
+            - type: NukeOperative
+            - type: RandomMetadata
+              nameSegments:
+                - NamesSyndicateElite
+              nameFormat: name-format-nukie-commander
+            - type: NpcFactionMember
+              factions:
+                - Scavengers
+          mindRoles:
+            - MindRoleScavengerBoss
+        - prefRoles: [ Scavenger ]
+          fallbackRoles: [ ScavengerBoss ]
+          spawnerPrototype: SpawnPointScavenger
+          max: 3
+          playerRatio: 10
+          startingGear: ScavengerGearFull
+          roleLoadout:
+            - RoleSurvivalScavenger
+          components:
+            - type: NukeOperative
+            - type: RandomMetadata
+              nameSegments:
+                - NamesSyndicateNormal
+              nameFormat: name-format-nukie-operator
+            - type: NpcFactionMember
+              factions:
+                - Scavengers
+          mindRoles:
+            - MindRoleScavenger

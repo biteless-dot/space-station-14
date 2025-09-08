@@ -43,6 +43,7 @@
 
     - id: AbductorsSpawn # Starlight
     - id: DerelictBorgiSpawn # Starlight
+    - id: LoneScavengerSpawn # Starlight
     
 - type: entity
   id: BaseStationEvent
