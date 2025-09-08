@@ -1,0 +1,19 @@
+- type: entity
+  parent: [BaseItem, BaseHighlyIllegalContraband]
+  id: ScavengerTelelink
+  name: Scavenger Telelink
+  description: A scrappy looking device used by scavengers to return to their ship.
+  components:
+    - type: Sprite
+      sprite: _Starlight/Objects/Devices/scavenger-telelink.rsi
+      state: telelink
+    - type: Item
+      sprite: _Starlight/Objects/Devices/scavenger-telelink.rsi
+
+#- type: entity
+#  parent: PirateBreakerUnlimited
+#  id: PirateBreaker
+#  suffix: Limited
+#  components:
+#    - type: LimitedCharges
+#    - type: AutoRecharge
