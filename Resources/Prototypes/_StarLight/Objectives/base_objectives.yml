@@ -25,3 +25,21 @@
     blacklist:
       components:
         - EscapeShuttleCondition
+
+# requires player captures a target alive
+# disables kill objectives, and is disabled by kill objectives
+- type: entity
+  abstract: true
+  parent: BaseSocialObjective
+  id: BaseCaptureAliveObjective
+  components:
+    - type: Objective
+      unique: false
+      icon:
+        sprite: Objects/Misc/handcuffs.rsi
+        state: handcuff
+    - type: ObjectiveBlacklistRequirement
+      blacklist:
+        components:
+          - KillPersonCondition
+    - type: CapturePersonAliveCondition
