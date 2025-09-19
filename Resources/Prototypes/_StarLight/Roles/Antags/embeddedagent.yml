@@ -8,3 +8,10 @@
   requirements:
     - !type:OverallPlaytimeRequirement
       time: 36000 # 10h STARLIGHT
+
+- type: startingGear
+  id: EmbeddedAgentGear
+  storage:
+    back: # DOTS - update their starting gear
+      - ThiefBeacon
+      - SatchelThief

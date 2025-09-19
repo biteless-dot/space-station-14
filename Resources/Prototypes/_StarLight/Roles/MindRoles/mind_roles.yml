@@ -5,3 +5,14 @@
   components:
     - type: MindRole
       roleType: CorporateAligned
+
+# Embedded Agent
+- type: entity
+  parent: BaseMindRoleAntag
+  id: MindRoleEmbeddedAgent
+  name: Embedded Agent Role
+  components:
+    - type: MindRole
+      antagPrototype: Thief
+      subtype: role-subtype-embeddedagent
+    - type: EmbeddedAgent

@@ -1,0 +1,24 @@
+- type: entity
+  parent: BaseGameRule
+  id: EmbeddedAgent
+  components:
+    - type: TraitorRule
+#    - type: EmbeddedAgentRule
+    - type: AntagObjectives
+      objectives:
+        - BaseCaptureAliveObjective # They always need to have this
+    - type: AntagSelection
+      agentName: embeddedagent-round-end-agent-name
+      selectionTime: IntraPlayerSpawn
+      definitions:
+        - prefRoles: [ Traitor ]
+          max: 1
+          playerRatio: 30
+          lateJoinAdditional: true
+          allowNonHumans: true
+          multiAntagSetting: None
+          startingGear: EmbeddedAgentGear
+          mindRoles:
+            - MindRoleEmbeddedAgent
+          briefing:
+            sound: "/Audio/Misc/thief_greeting.ogg" # DOTS - replace with new sound

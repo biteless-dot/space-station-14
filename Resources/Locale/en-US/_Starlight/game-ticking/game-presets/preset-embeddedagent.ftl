@@ -1,0 +1,1 @@
+embeddedagent-round-end-agent-name = embedded agent
