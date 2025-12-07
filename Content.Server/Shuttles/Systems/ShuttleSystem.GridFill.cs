@@ -10,16 +10,20 @@ using Robust.Shared.Map.Components;
 using Robust.Shared.Random;
 using Robust.Shared.Utility;
 using Content.Server._Starlight.Station; // Starlight
-using System.Linq; // Starlight
+using System.Linq;
+using Content.Server._Starlight.Shuttles.Components;
+using Robust.Shared.ContentPack; // Starlight
 
 namespace Content.Server.Shuttles.Systems;
 
-public sealed partial class ShuttleSystem
+public sealed partial class ShuttleSystem(IResourceManager _resourceManager)
 {
     private void InitializeGridFills()
     {
         SubscribeLocalEvent<GridSpawnComponent, StationPostInitEvent>(OnGridSpawnPostInit);
         SubscribeLocalEvent<StationCargoShuttleComponent, StationPostInitEvent>(OnCargoSpawnPostInit);
+        SubscribeLocalEvent<StationSalvageShuttleComponent, StationPostInitEvent>(OnRandomShuttleSpawnPostInit);
+        SubscribeLocalEvent<StationMiningShuttleComponent, StationPostInitEvent>(OnRandomShuttleSpawnPostInit);
 
         SubscribeLocalEvent<GridFillComponent, MapInitEvent>(OnGridFillMapInit);
 
@@ -39,10 +43,20 @@ public sealed partial class ShuttleSystem
             }
 
             var cargoQuery = AllEntityQuery<StationCargoShuttleComponent>();
+            var salvageQuery = AllEntityQuery<StationSalvageShuttleComponent>();
+            var miningQuery = AllEntityQuery<StationMiningShuttleComponent>();
 
             while (cargoQuery.MoveNext(out var uid, out var comp))
             {
                 CargoSpawn(uid, comp);
+            }
+            while (salvageQuery.MoveNext(out var uid, out var comp))
+            {
+                RandomShuttleSpawn(uid, comp);
+            }
+            while (miningQuery.MoveNext(out var uid, out var comp))
+            {
+                RandomShuttleSpawn(uid, comp);
             }
         }
     }
@@ -64,6 +78,23 @@ public sealed partial class ShuttleSystem
             }
         CargoSpawn(uid, component);
     }
+    
+    private void OnRandomShuttleSpawnPostInit(EntityUid uid, StationRandomShuttleBaseComponent component, ref StationPostInitEvent args)
+    {
+        if (TryComp<StationDataComponent>(uid, out var station))
+            foreach (var grid in station.Grids)
+            {
+                if (!TryComp<BecomesStationMidRoundComponent>(grid, out var becomesStation)) continue;
+                // if (component is StationCargoShuttleComponent && !becomesStation.AllowCargoShuttle)
+                //     return;
+                if (component is StationMiningShuttleComponent && !becomesStation.AllowMiningShuttle)
+                    return;
+                if (component is StationSalvageShuttleComponent && !becomesStation.AllowSalvageShuttle)
+                    return;
+                break;
+            }
+        RandomShuttleSpawn(uid, component);
+    }
 
     private void CargoSpawn(EntityUid uid, StationCargoShuttleComponent component)
     {
@@ -78,6 +109,52 @@ public sealed partial class ShuttleSystem
         _mapSystem.CreateMap(out var mapId);
 
         if (_loader.TryLoadGrid(mapId, component.Path, out var ent))
+        {
+            if (HasComp<ShuttleComponent>(ent))
+                TryFTLProximity(ent.Value, targetGrid.Value);
+
+            _station.AddGridToStation(uid, ent.Value);
+        }
+
+        _mapSystem.DeleteMap(mapId);
+    }
+    
+    private void RandomShuttleSpawn(EntityUid uid, StationRandomShuttleBaseComponent component)
+    {
+        if (!_cfg.GetCVar(CCVars.GridFill))
+            return;
+
+        var targetGrid = _station.GetLargestGrid(uid);
+
+        if (targetGrid == null)
+            return;
+
+        _mapSystem.CreateMap(out var mapId);
+        
+        // Determine directory to search
+        ResPath shuttlePath = component.HasSizeClassFolder
+            ? component.BasePath / component.ShuttleSizeClass
+            : component.BasePath;
+        
+        // Enumerate .yml files
+        var files = _resourceManager.ContentFindFiles(shuttlePath)
+            .Where(f => f.Extension.Equals("yml"))
+            .ToList();
+        
+        if (files.Count == 0)
+        {
+            Log.Error($"No shuttle files found in folder: {shuttlePath}");
+            _mapSystem.DeleteMap(mapId);
+            return;
+        }
+        
+        // Pick a random file
+        ResPath shuttleToLoad = _random.Pick(files);
+        
+        // Log the selection
+        Log.Info($"Out of {files.Count} shuttles in path {shuttlePath}, selected {shuttleToLoad.FilenameWithoutExtension}");
+
+        if (_loader.TryLoadGrid(mapId, shuttleToLoad, out var ent))
         {
             if (HasComp<ShuttleComponent>(ent))
                 TryFTLProximity(ent.Value, targetGrid.Value);

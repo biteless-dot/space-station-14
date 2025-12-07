@@ -17,6 +17,10 @@
           emergencyShuttlePath: /Maps/_Starlight/Shuttles/emergency_silica.yml
         - type: StationCargoShuttle
           path: /Maps/_Starlight/Shuttles/cargo_silica.yml
+        - type: StationMiningShuttle
+          shuttleSizeClass: Medium
+        - type: StationSalvageShuttle
+          shuttleSizeClass: Medium
         - type: StationJobs
           availableJobs:
             # 92 jobs, 82 not counting training jobs

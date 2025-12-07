@@ -51,6 +51,10 @@
   components:
     - type: StationCargoShuttle
       path: /Maps/Shuttles/cargo.yml
+    - type: StationSalvageShuttle # 🌟Starlight begin🌟
+      shuttleSizeClass: Medium
+    - type: StationMiningShuttle
+      shuttleSizeClass: Medium # Defaults to Medium shuttles 🌟Starlight end🌟
     - type: GridSpawn
       groups:
         trade: !type:GridSpawnGroup
@@ -62,15 +66,7 @@
 #        mining: !type:GridSpawnGroup # 🌟Starlight begin🌟
 #          paths:
 #            - /Maps/Shuttles/mining.yml
-#          nameGrid: false # Starlight - honors entityName in mining.yml
-        cargo_salvage_shuttle: !type:GridSpawnGroup
-          paths:
-            - /Maps/_Starlight/Shuttles/Salvage/pioneer.yml
-          nameGrid: false # Starlight - honors entityName
-        cargo_mining_shuttle: !type:GridSpawnGroup
-          paths:
-            - /Maps/_Starlight/Shuttles/Mining/breaker.yml
-          nameGrid: false # 🌟Starlight end🌟
+#          nameGrid: false # Starlight - honors entityName in mining.yml 🌟Starlight end🌟
         # Spawn last
         ruins: !type:GridSpawnGroup
           hide: true
