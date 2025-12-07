@@ -2,6 +2,7 @@ using Content.Server._NullLink;
 using Content.Server._NullLink.Core;
 using Content.Server._NullLink.EventBus;
 using Content.Server._NullLink.PlayerData;
+using Content.Server._Starlight.BugReports; // Staright
 using Content.Server.Acz;
 using Content.Server.Administration;
 using Content.Server.Administration.Logs;
@@ -31,6 +32,7 @@ using Content.Server.ServerUpdates;
 using Content.Server.Starlight.TextToSpeech;
 using Content.Server.Voting.Managers;
 using Content.Shared._NullLink;
+using Content.Shared._Starlight.DocumentManager;
 using Content.Shared.CCVar;
 using Content.Shared.Kitchen;
 using Content.Shared.Localizations;
@@ -129,6 +131,8 @@ namespace Content.Server.Entry
                 //🌟Starlight🌟 start
                 IoCManager.Resolve<ITTSManager>().Initialize();
                 IoCManager.Resolve<HolidaySystem>().Initialize();
+                IoCManager.Resolve<IBugReportManager>().Initialize();
+                IoCManager.Resolve<PreWrittenDocumentManager>().Initialize();
                 //🌟Starlight🌟 end
             }
         }
@@ -215,6 +219,7 @@ namespace Content.Server.Entry
             IoCManager.Resolve<INullLinkPlayerManager>().Shutdown();
             IoCManager.Resolve<INullLinkEventBusManager>().Shutdown();
             IoCManager.Resolve<IActorRouter>().Shutdown();
+            IoCManager.Resolve<IBugReportManager>().Shutdown();
             // Nullink end
         }
 
