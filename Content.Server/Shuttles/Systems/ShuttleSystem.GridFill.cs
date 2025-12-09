@@ -133,7 +133,7 @@ public sealed partial class ShuttleSystem(IResourceManager _resourceManager)
         
         // Determine directory to search
         ResPath shuttlePath = component.HasSizeClassFolder
-            ? component.BasePath / component.ShuttleSizeClass
+            ? component.BasePath / component.ShuttleClass
             : component.BasePath;
         
         // Enumerate .yml files

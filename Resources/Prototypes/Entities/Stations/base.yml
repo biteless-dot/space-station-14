@@ -52,9 +52,9 @@
     - type: StationCargoShuttle
       path: /Maps/Shuttles/cargo.yml
     - type: StationSalvageShuttle # 🌟Starlight begin🌟
-      shuttleSizeClass: Medium
+      shuttleClass: Medium
     - type: StationMiningShuttle
-      shuttleSizeClass: Medium # Defaults to Medium shuttles 🌟Starlight end🌟
+      shuttleClass: Medium # Defaults to Medium shuttles 🌟Starlight end🌟
     - type: GridSpawn
       groups:
         trade: !type:GridSpawnGroup

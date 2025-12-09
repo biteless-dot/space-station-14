@@ -84,5 +84,11 @@ namespace Content.Shared.Shuttles.Components
         [DataField, AutoNetworkedField]
         public string? PriorityTag = null;
         //end starlight
+        
+        /// <summary>
+        /// MIKEY -- doesnt do anything yet
+        /// </summary>
+        [DataField]
+        public float ShuttleClassType;
     }
 }

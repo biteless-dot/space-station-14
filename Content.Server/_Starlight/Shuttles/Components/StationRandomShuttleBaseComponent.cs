@@ -17,7 +17,7 @@ public abstract partial class StationRandomShuttleBaseComponent : Component
     [DataField]
     public bool HasSizeClassFolder = false;
     
-    [DataField("shuttleSizeClass")]
-    public string ShuttleSizeClass = "Medium";
+    [DataField("shuttleClass")]
+    public string ShuttleClass = "Medium";
     
 }
