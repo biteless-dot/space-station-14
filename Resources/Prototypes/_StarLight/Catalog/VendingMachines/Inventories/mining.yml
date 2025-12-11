@@ -233,18 +233,6 @@
   conditions:
     - !type:BuyerAccessCondition
 
-- type: listing
-  id: VendorMiningShuttleGunKineticFlatpack
-  productEntity: ShuttleGunKineticFlatpack
-  cost:
-    SalvageTicket: 750
-  categories:
-    - MiningEquipment
-  conditions:
-    - !type:ListingLimitedStockCondition
-    - stock: 4
-    - !type:BuyerAccessCondition
-
 #- type: listing
 #  id: VendorMiningExpeditionEncryptionKey
 #  productEntity: EncryptionKeyExpedition
