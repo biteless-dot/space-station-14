@@ -32,6 +32,7 @@ using Robust.Shared.Player;
 using Content.Shared.NameModifier.Components;
 using Content.Shared.Power;
 using System.Linq;
+using Content.Server._Starlight.Storage;
 using Content.Shared.Ghost;
 using Content.Shared.Inventory;
 using Robust.Server.Containers;
@@ -66,6 +67,8 @@ public sealed class FaxSystem : EntitySystem
     //end
 
     private static readonly ProtoId<ToolQualityPrototype> ScrewingQuality = "Screwing";
+    private readonly List<FaxPrintout> _allFaxes = new();
+    private readonly List<EntityUid> _centcommDigiboards = new();
 
     private const string PaperSlotId = "Paper";
 
@@ -94,6 +97,9 @@ public sealed class FaxSystem : EntitySystem
         SubscribeLocalEvent<FaxMachineComponent, FaxSendMessage>(OnSendButtonPressed);
         SubscribeLocalEvent<FaxMachineComponent, FaxRefreshMessage>(OnRefreshButtonPressed);
         SubscribeLocalEvent<FaxMachineComponent, FaxDestinationMessage>(OnDestinationSelected);
+        
+        // Subscribe to CentcommDigiboard spawn event
+        SubscribeLocalEvent<CentcommDigiboardComponent, ComponentInit>(OnCentcommDigiboardInit);
     }
 
     public override void Update(float frameTime)
@@ -687,6 +693,59 @@ public sealed class FaxSystem : EntitySystem
                 }
             }
         }
+        
+        // Send to CentcommDigiboard
+        SaveFaxToDigiboards(printout);
         //starlight end
+    }
+    // Called when a new fax is received
+    private void SaveFaxToDigiboards(FaxPrintout printout)
+    {
+        _allFaxes.Add(printout);
+
+        foreach (var board in _centcommDigiboards)
+        {
+            if (!EntityManager.EntityExists(board))
+                continue;
+
+            // Insert paper for this fax into the board
+            if (_container.TryGetContainer(board, out var container))
+            {
+                var paper = Spawn(printout.PrototypeId, Transform(board).Coordinates);
+                if (TryComp<PaperComponent>(paper, out var paperComp))
+                {
+                    _paperSystem.SetContent((paper, paperComp), printout.Content);
+                    paperComp.EditingDisabled = printout.Locked;
+                }
+                _metaData.SetEntityName(paper, printout.Name);
+                if (printout.Label is { } label)
+                    _labelSystem.Label(paper, label);
+
+                container.Insert(paper);
+            }
+        }
+    }
+    
+    private void OnCentcommDigiboardInit(EntityUid uid, CentcommDigiboardComponent comp, ComponentInit args)
+    {
+        _centcommDigiboards.Add(uid);
+
+        if (_container.TryGetContainer(uid, out var container))
+        {
+            foreach (var fax in _allFaxes)
+            {
+                var paper = Spawn(fax.PrototypeId, Transform(uid).Coordinates);
+                if (TryComp<PaperComponent>(paper, out var paperComp))
+                {
+                    _paperSystem.SetContent((paper, paperComp), fax.Content);
+                    paperComp.EditingDisabled = fax.Locked;
+                }
+                _metaData.SetEntityName(paper, fax.Name);
+                if (fax.Label is { } label)
+                    _labelSystem.Label(paper, label);
+
+                container.Insert(paper);
+            }
+        }
     }
 }
