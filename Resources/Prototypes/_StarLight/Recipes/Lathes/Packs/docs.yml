@@ -64,3 +64,15 @@
 #  - PrintedDocumentBusinessDealRecipe
 #  - PrintedDocumentNoteBeginningMilitaryActionsRecipe
 #  - PrintedDocumentReportAccomplishmentGoalsRecipe
+
+- type: latheRecipePack
+  id: DocumentsCommand
+  recipes:
+    - PrintedDocumentReportMorgueRecipe
+    - PrintedDocumentReportStationRecipe
+
+- type: latheRecipePack
+  id: DocumentsCentralCommand
+  recipes:
+    - PrintedDocumentReportMorgueRecipe
+    - PrintedDocumentReportStationRecipe

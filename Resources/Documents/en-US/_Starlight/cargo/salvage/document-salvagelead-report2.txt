@@ -1,0 +1,34 @@
+[head=1][color=Purple]────────────────────[/color][/head]
+[color=#b18644]█▀▀ █░░▀█░█▀ [/color] [head=3]  [color=#8d6932]STATION SALVAGE TEAM[/color][/head]
+[color=#b18644]▀▀█ █░░░█▄█░[/color][bolditalic]   [color=Purple] 95% Contraband-Free! Guaranteed![/color][/bolditalic]
+[color=#b18644]▀▀▀ ▀▀▀░░▀░░[/color]   [color=#aaaaaa][italic]OFFICIAL SALVAGE TEAM DOCUMENT[/italic][/color]
+[head=1][color=Purple]────────────────────[/color][/head]
+              [color=#b18644][mono]SALVAGE LEAD REPORT- EXPEDITION #[form][/mono][/color]
+[head=1][color=Purple]────────────────────[/color][/head]
+[bold]Date:[/bold] [form]
+[bold]Shift Time:[/bold] [form]
+[bold]Document Compiler:[/bold] [signature], Salvage Lead
+[head=3][color=Purple]──────────────────────────[/color][/head]
+[bold]Expedition Destination Type:[/bold] [form]
+[bold]Expedition Threat:[/bold] [form]
+
+[bold]Observations:[/bold]
+[head=3][color=Purple]──────────────────────────[/color][/head]
+[bold]Collected Contraband / Notable Finds:[/bold]
+• [form]
+• [form]
+• [form]
+• [form]
+• [form]
+• [form]
+
+[color=FireBrick][italic]Contraband should be turned over to the Security Department at the first possible opportunity. If you want that AK, get a permit! [/italic][/color]
+[head=3][color=Purple]──────────────────────────[/color][/head]
+[bold]Team Status:[/bold] [form]
+[bold]Overall Readiness:[/bold] [form]
+
+[bold]Further Notes:[/bold] [form]
+[head=1][color=Purple]────────────────────[/color][/head]
+
+
+                      [color=Silver][mono]AREA FOR STAMPS AND SIGNATURES[/mono][/color]
