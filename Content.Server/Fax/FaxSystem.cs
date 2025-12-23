@@ -640,6 +640,8 @@ public sealed class FaxSystem : EntitySystem
 
     private void NotifyAdmins(string faxName, FaxPrintout printout)
     {
+        // MIKEY - update the admin CC fax notification message to also include the name of the fax it was sent to,
+        // and the name of the fax it was sent from
         _chat.SendAdminAnnouncement(Loc.GetString("fax-machine-chat-notify", ("fax", faxName)));
         _audioSystem.PlayGlobal("/Audio/Machines/high_tech_confirm.ogg", Filter.Empty().AddPlayers(_adminManager.ActiveAdmins), false, AudioParams.Default.WithVolume(-8f));
 
