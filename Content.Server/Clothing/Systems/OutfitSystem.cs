@@ -14,6 +14,9 @@ using Content.Shared.Roles;
 using Content.Shared.Station;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
+using Content.Server.Storage.EntitySystems;
+using Content.Shared.Storage;
+using Content.Shared.Containers.ItemSlots;
 
 namespace Content.Server.Clothing.Systems;
 
@@ -25,6 +28,8 @@ public sealed class OutfitSystem : EntitySystem
     [Dependency] private readonly InventorySystem _invSystem = default!;
     [Dependency] private readonly SharedStationSpawningSystem _spawningSystem = default!;
     [Dependency] private readonly SharedHumanoidAppearanceSystem _appearance = default!; //Starlight
+    [Dependency] private readonly ItemSlotsSystem _itemSlotsSystem = default!;
+    [Dependency] private readonly StorageSystem _storageSystem = default!;
 
     public bool SetOutfit(EntityUid target, string gear, Action<EntityUid, EntityUid>? onEquipped = null, bool unremovable = false)
     {
@@ -72,6 +77,35 @@ public sealed class OutfitSystem : EntitySystem
             {
                 var inhandEntity = EntityManager.SpawnEntity(prototype, coords);
                 _handSystem.TryPickup(target, inhandEntity, checkActionBlocker: false, handsComp: handsComponent);
+            }
+        }
+
+        // Insert storage items (e.g. backpack contents)
+        if (startingGear.Storage.Count > 0)
+        {
+            var coords = EntityManager.GetComponent<TransformComponent>(target).Coordinates;
+            foreach (var (slotName, entProtos) in startingGear.Storage)
+            {
+                if (entProtos == null || entProtos.Count == 0)
+                    continue;
+
+                if (_invSystem.TryGetSlotEntity(target, slotName, out var slotEnt) && EntityManager.TryGetComponent(slotEnt, out StorageComponent? storage))
+                {
+                    foreach (var entProto in entProtos)
+                    {
+                        var spawnedEntity = EntityManager.SpawnEntity(entProto, coords);
+                        _storageSystem.Insert(slotEnt.Value, spawnedEntity, out _, user: null, storageComp: storage, playSound: false);
+                    }
+                }
+                // If the slot has ItemSlotsComponent instead (e.g. suit storage)
+                else if (_invSystem.TryGetSlotEntity(target, slotName, out var slotEnt2) && EntityManager.TryGetComponent(slotEnt2, out ItemSlotsComponent? itemSlots))
+                {
+                    foreach (var entProto in entProtos)
+                    {
+                        var spawnedEntity = EntityManager.SpawnEntity(entProto, coords);
+                        _itemSlotsSystem.TryInsertEmpty((slotEnt2.Value, itemSlots), spawnedEntity, null, excludeUserAudio: true, suppressSound: true);
+                    }
+                }
             }
         }
 
