@@ -27,7 +27,11 @@ using Content.Shared.RetractableItemAction;
 using Content.Shared.Changeling.Systems;
 using Content.Shared.Changeling.Components;
 using Content.Server.Changeling.Systems;
-using Content.Shared.Humanoid; // Starlight edit
+// Starlight edit start
+using Content.Shared.Humanoid;
+using Content.Shared.Body.Components;
+using Content.Shared.Chemistry.Reagent;
+// Starlight edit end
 
 namespace Content.Server.Changeling;
 
@@ -127,9 +131,20 @@ public sealed partial class ChangelingSystem : EntitySystem
 
         UpdateBiomass(uid, comp, comp.MaxBiomass - comp.TotalAbsorbedEntities);
 
-        _blood.ChangeBloodReagent(target, "FerrochromicAcid");
-        _blood.SpillAllSolutions(target);
-
+        // Starlight edit start - Do not turn the victim's blood into ferrochromic acid permanently
+        // allows for ling tests to still pass despite being hollowed.
+        if (TryComp<BloodstreamComponent>(target, out var bloodstream) && bloodstream.BloodReferenceSolution is { } originalBlood)
+        {
+            var blood = originalBlood.Clone();
+            blood.ScaleTo(originalBlood.Volume);
+            var ferroAcid = new ReagentQuantity("FerrochromicAcid", originalBlood.Volume);
+        
+            _blood.ChangeBloodReagents(target, new Solution([ferroAcid]));
+            _blood.SpillAllSolutions(target);
+            _blood.ChangeBloodReagents(target, blood);
+        }
+        // Starlight edit end
+        
         EnsureComp<AbsorbedComponent>(target);
 
         var popup = Loc.GetString("changeling-absorb-end-self-ling");
@@ -229,7 +244,7 @@ public sealed partial class ChangelingSystem : EntitySystem
             return;
 
         // heal of everything
-        _damage.SetAllDamage(uid, damageable, 0);
+        _damage.SetAllDamage(uid, 0);
         _mobState.ChangeMobState(uid, MobState.Alive);
         _blood.TryModifyBloodLevel(uid, 1000);
         _blood.TryModifyBleedAmount(uid, -1000);
@@ -269,7 +284,7 @@ public sealed partial class ChangelingSystem : EntitySystem
 
         var pos = _transform.GetMapCoordinates(uid);
         var power = comp.ShriekPower;
-        _emp.EmpPulse(pos, power, 5000f, power * 2);
+        _emp.EmpPulse(pos, power, 5000f, power * TimeSpan.FromSeconds(2));
     }
     private void OnShriekResonant(EntityUid uid, ChangelingComponent comp, ref ShriekResonantEvent args)
     {
@@ -393,9 +408,14 @@ public sealed partial class ChangelingSystem : EntitySystem
     {
         if (TryComp<CuffableComponent>(uid, out var cuffs) && cuffs.Container.ContainedEntities.Count > 0)
         {
-            var cuff = cuffs.LastAddedCuffs;
+            if (_cuffs.TryGetLastCuff(uid, out var cuff))
+            {
+                if (cuff.HasValue)
+                {
+                    _cuffs.Uncuff(uid, uid, cuff.Value);
+                }
+            }
 
-            _cuffs.Uncuff(uid, cuffs.LastAddedCuffs, cuff);
             QueueDel(cuff);
         }
 
