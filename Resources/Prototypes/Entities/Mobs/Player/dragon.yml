@@ -31,6 +31,7 @@
     name: ghost-role-information-space-dragon-name
     description: ghost-role-information-space-dragon-description
     rules: ghost-role-information-space-dragon-rules
+    important: true # SL
     mindRoles:
     - MindRoleGhostRoleTeamAntagonist
     raffle:
@@ -123,6 +124,7 @@
     - RadiationProtection
     - Adrenaline
   - type: Temperature
+  - type: TemperatureDamage
     heatDamageThreshold: 2400
   - type: Metabolizer
     solutionOnBody: false
@@ -165,6 +167,11 @@
       - Door
       tags:
       - Wall
+    # Starlight start - no eating indestructible walls
+    blacklist:
+      tags:
+      - Inedible
+    # Starlight end
   - type: Tag
     tags:
     - CannotSuicide
@@ -233,6 +240,7 @@
   - type: GhostRole
     description: ghost-role-information-space-dragon-dungeon-description
     rules: ghost-role-information-space-dragon-dungeon-rules
+    important: true # SL
     raffle:
       settings: default
   - type: SlowOnDamage

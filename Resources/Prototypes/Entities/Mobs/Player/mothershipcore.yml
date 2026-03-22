@@ -5,9 +5,9 @@
   description: A sentient machine that can produce Xenoborgs. Without this the Xenoborgs are doomed.
   components:
   - type: InputMover # needs this to pilot the mothership
-  - type: MovementSpeedModifier
-    baseWalkSpeed : 0 # shouldn't move
-    baseSprintSpeed : 0 # shouldn't move
+  - type: BlockMovement # They should never be moving!
+    blockInteraction: false
+    blockUse: false
   - type: Appearance
   - type: WiresVisuals
   - type: Damageable
@@ -126,6 +126,9 @@
   - type: WarpPoint
     location: Mothership Core
     follow: true
+    blacklist: # Starlight start
+      tags: # This is here because Wizard
+      - GhostOnlyWarp # Starlight end
   - type: VoiceOverride
     nameOverride: MOTHERSHIP CORE
   - type: TypingIndicator
@@ -159,6 +162,7 @@
     - SiliconEmotes
     - CanPilot
     - Structure
+    - GhostOnlyWarp # Starlight
   - type: GuideHelp
     guides:
     - Robotics
@@ -199,6 +203,11 @@
       cell_slot:
         name: power-cell-slot-component-slot-name-default
         startingItem: PowerCellMicroreactor
+        #Starlight Start
+        blacklist:
+          tags:
+          - MechReactor
+        #Starlight End
   - type: Puller
     needsHands: false
   - type: Eye

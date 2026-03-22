@@ -72,10 +72,13 @@ namespace Content.IntegrationTests.Tests
             {"/Maps/Shuttles/ShuttleEvent/cruiser.yml", ["ShuttleGunPerforator"]},
             {"/Maps/Shuttles/ShuttleEvent/instigator.yml", ["ShuttleGunFriendship"]},
             {"/Maps/_Starlight/Stations/Cork.yml", ["RubberStampSyndicate"]}, // Starlight start
+            {"/Maps/_Starlight/Shuttles/CC-NT/NTSF_Minos_Battlecruiser.yml", ["ShuttleGunDuster", "ShuttleGunPerforator"]},
+            {"/Maps/_Starlight/Shuttles/CC-NT/Decimus_Shuttle_Magnus.yml", ["ShuttleGunDuster"]},
             {"/Maps/_Starlight/Shuttles/RecluseClassSHC.yml", ["RubberStampSyndicate"]},
             {"/Maps/_Starlight/Shuttles/Signaleer.yml", ["RubberStampSyndicate"]},
             {"/Maps/_Starlight/Nonstations/nukieplanet.yml", ["RubberStampSyndicate"]},
             {"/Maps/_Starlight/Nonstations/nukiewestern.yml", ["RubberStampSyndicate"]},
+            {"/Maps/_Starlight/Nonstations/geigerComplex.yml", ["RubberStampSyndicate"]},
             {"/Maps/_Starlight/Dungeon/syndie.yml", ["RubberStampSyndicate"]},
             {"/Maps/_Starlight/Shuttles/scarletSHCdefenderFinal.yml", ["RubberStampSyndicate", "TraitorCodePaper"]},
             {"/Maps/_Starlight/Centcomms/CC_Outpost_SC17.yml", ["BoxFolderCentCom", "RubberStampCentcom"]},
@@ -95,7 +98,6 @@ namespace Content.IntegrationTests.Tests
             "/Maps/Shuttles/AdminSpawn/**", // admin gaming
            #region starlight
             "/Maps/_Starlight/Shuttles/Radiotower.yml", // Command stamps - listening post.
-            "/Maps/_Starlight/Stations/Remix.yml", // Admeme map
             #endregion
         };
 
@@ -129,10 +131,8 @@ namespace Content.IntegrationTests.Tests
             "StarlightManor",
             "StarlightLeth",
             "StarlightMing",
-            "StarlightOrigin",
             "StarlightOrwell",
             "StarlightPrism",
-            "StarlightRemix",
             "StarlightStarboard",
             "StarlightBagel",
             "StarlightBox",
@@ -144,14 +144,17 @@ namespace Content.IntegrationTests.Tests
             "StarlightFland",
             "StarlightHotel",
             "StarlightOasis",
-            "StarlightOmega",
             "StarlightPacked",
             "StarlightReach",
             "StarlightSaltern",
             "StarlightSilica",
             "StarlightCluster",
             "StarlightStationBuilding",
-            "StarlightPlasma"
+            "StarlightPlasma",
+			"StarlightSpaceMall",
+            "StarlightSepultum",
+            "StarlightBoxcars",
+            "StarlightSerpentcrest"
             #endregion
         };
 
