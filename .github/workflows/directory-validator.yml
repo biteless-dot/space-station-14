@@ -2,7 +2,7 @@ name: Check for StarLight Directory
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, edited]
+    types: [opened, synchronize, reopened, edited] 
 
 jobs:
   check-typo-directory:
