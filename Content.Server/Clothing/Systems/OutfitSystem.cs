@@ -83,26 +83,26 @@ public sealed class OutfitSystem : EntitySystem
 
         if (startingGear.Storage.Count > 0)
         {
-            var coords = EntityManager.GetComponent<TransformComponent>(target).Coordinates;
+            var coords = Comp<TransformComponent>(target).Coordinates;
             foreach (var (slotName, storageContainers) in startingGear.Storage)
             {
                 if (storageContainers.Count == 0)
                     continue;
 
-                if (_invSystem.TryGetSlotEntity(target, slotName, out var slotEnt) && EntityManager.TryGetComponent(slotEnt, out StorageComponent? storage))
+                if (_invSystem.TryGetSlotEntity(target, slotName, out var slotEnt) && TryComp(slotEnt, out StorageComponent? storage))
                 {
                     foreach (var storageContainer in storageContainers)
                     {
-                        var spawnedEntity = EntityManager.SpawnEntity(storageContainer, coords);
+                        var spawnedEntity = Spawn(storageContainer, coords);
                         _storageSystem.Insert(slotEnt.Value, spawnedEntity, out _, user: null, storageComp: storage, playSound: false);
                     }
                 }
-                else if (_invSystem.TryGetSlotEntity(target, slotName, out var slotEnt2) && EntityManager.TryGetComponent(slotEnt2, out ItemSlotsComponent? itemSlots))
+                else if (_invSystem.TryGetSlotEntity(target, slotName, out var slotEnt2) && TryComp(slotEnt2, out ItemSlotsComponent? itemSlots))
                 {
                     foreach (var storageContainer in storageContainers)
                     {
-                        var spawnedEntity = EntityManager.SpawnEntity(storageContainer, coords);
-                        _itemSlotsSystem.TryInsertEmpty((slotEnt2.Value, itemSlots), spawnedEntity, null, excludeUserAudio: true, suppressSound: true);
+                        var spawnedEntity = Spawn(storageContainer, coords);
+                        _itemSlotsSystem.TryInsertEmpty((slotEnt2.Value, itemSlots), spawnedEntity, null, excludeUserAudio: true);
                     }
                 }
             }
