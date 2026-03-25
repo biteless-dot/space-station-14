@@ -80,29 +80,28 @@ public sealed class OutfitSystem : EntitySystem
             }
         }
 
-        // Insert storage items (e.g. backpack contents)
+
         if (startingGear.Storage.Count > 0)
         {
             var coords = EntityManager.GetComponent<TransformComponent>(target).Coordinates;
-            foreach (var (slotName, entProtos) in startingGear.Storage)
+            foreach (var (slotName, storageContainers) in startingGear.Storage)
             {
-                if (entProtos == null || entProtos.Count == 0)
+                if (storageContainers.Count == 0)
                     continue;
 
                 if (_invSystem.TryGetSlotEntity(target, slotName, out var slotEnt) && EntityManager.TryGetComponent(slotEnt, out StorageComponent? storage))
                 {
-                    foreach (var entProto in entProtos)
+                    foreach (var storageContainer in storageContainers)
                     {
-                        var spawnedEntity = EntityManager.SpawnEntity(entProto, coords);
+                        var spawnedEntity = EntityManager.SpawnEntity(storageContainer, coords);
                         _storageSystem.Insert(slotEnt.Value, spawnedEntity, out _, user: null, storageComp: storage, playSound: false);
                     }
                 }
-                // If the slot has ItemSlotsComponent instead (e.g. suit storage)
                 else if (_invSystem.TryGetSlotEntity(target, slotName, out var slotEnt2) && EntityManager.TryGetComponent(slotEnt2, out ItemSlotsComponent? itemSlots))
                 {
-                    foreach (var entProto in entProtos)
+                    foreach (var storageContainer in storageContainers)
                     {
-                        var spawnedEntity = EntityManager.SpawnEntity(entProto, coords);
+                        var spawnedEntity = EntityManager.SpawnEntity(storageContainer, coords);
                         _itemSlotsSystem.TryInsertEmpty((slotEnt2.Value, itemSlots), spawnedEntity, null, excludeUserAudio: true, suppressSound: true);
                     }
                 }
