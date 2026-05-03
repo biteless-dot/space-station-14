@@ -8,6 +8,8 @@ using Content.Shared.Administration.Components;
 using Content.Shared.Administration.Logs;
 using Content.Shared.CombatMode;
 using Content.Shared.Damage;
+using Content.Shared.Damage.Components;
+using Content.Shared.Damage.Events;
 using Content.Shared.Damage.Systems;
 using Content.Shared.Database;
 using Content.Shared.FixedPoint;
@@ -40,6 +42,9 @@ using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Timing;
 using ItemToggleMeleeWeaponComponent = Content.Shared.Item.ItemToggle.Components.ItemToggleMeleeWeaponComponent;
+using Content.Shared.Wieldable.Components; // Starlight
+using Content.Shared._Starlight.Combat.Disarming; // Starlight
+using Content.Shared._Starlight.Camera; // Starlight | ES Screenshake
 
 namespace Content.Shared.Weapons.Melee;
 
@@ -64,7 +69,10 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
     [Dependency] protected readonly SharedPopupSystem PopupSystem = default!;
     [Dependency] protected readonly SharedTransformSystem TransformSystem = default!;
     [Dependency] private   readonly SharedStaminaSystem _stamina = default!;
+    [Dependency] private   readonly DamageExamineSystem _damageExamine = default!;
+    [Dependency] private readonly ScreenshakeSystem _shake = default!; // Starlight | ES Screenshake
 
+    private static readonly string BluntDamageName = "Blunt"; // Starlight
     private const int AttackMask = (int) (CollisionGroup.MobMask | CollisionGroup.Opaque);
 
     /// <summary>
@@ -84,6 +92,7 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
         SubscribeLocalEvent<MeleeWeaponComponent, HandSelectedEvent>(OnMeleeSelected);
         SubscribeLocalEvent<MeleeWeaponComponent, ShotAttemptedEvent>(OnMeleeShotAttempted);
         SubscribeLocalEvent<MeleeWeaponComponent, GunShotEvent>(OnMeleeShot);
+        SubscribeLocalEvent<MeleeWeaponComponent, DamageExamineEvent>(OnMeleeExamineDamage);
         SubscribeLocalEvent<BonusMeleeDamageComponent, GetMeleeDamageEvent>(OnGetBonusMeleeDamage);
         SubscribeLocalEvent<BonusMeleeDamageComponent, GetHeavyDamageModifierEvent>(OnGetBonusHeavyDamageModifier);
         SubscribeLocalEvent<BonusMeleeAttackRateComponent, GetMeleeAttackRateEvent>(OnGetBonusMeleeAttackRate);
@@ -96,8 +105,7 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
         SubscribeAllEvent<StopAttackEvent>(OnStopAttack);
 
 #if DEBUG
-        SubscribeLocalEvent<MeleeWeaponComponent,
-                            MapInitEvent>                   (OnMapInit);
+        SubscribeLocalEvent<MeleeWeaponComponent, MapInitEvent>(OnMapInit);
     }
 
     private void OnMapInit(EntityUid uid, MeleeWeaponComponent component, MapInitEvent args)
@@ -125,6 +133,18 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
         }
     }
 
+    private void OnMeleeExamineDamage(EntityUid uid, MeleeWeaponComponent component, ref DamageExamineEvent args)
+    {
+        if (component.Hidden)
+            return;
+
+        var damageSpec = GetDamage(uid, args.User, component);
+
+        if (damageSpec.Empty)
+            return;
+
+        _damageExamine.AddDamageExamine(args.Message, Damageable.ApplyUniversalAllModifiers(damageSpec), Loc.GetString("damage-melee"));
+    }
     private void OnMeleeSelected(EntityUid uid, MeleeWeaponComponent component, HandSelectedEvent args)
     {
         var attackRate = GetAttackRate(uid, args.User, component);
@@ -420,6 +440,12 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
 
         RaiseLocalEvent(user, ref ev); // 🌟Starlight🌟
 
+        if (weapon.SwingBeverage)
+        {
+            weapon.SwingLeft = !weapon.SwingLeft;
+            DirtyField(weaponUid, weapon, nameof(MeleeWeaponComponent.SwingLeft));
+        }
+
         if (ev.Cancelled)
         {
             if (ev.Message != null)
@@ -534,9 +560,8 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
         RaiseLocalEvent(target.Value, attackedEvent);
 
         var modifiedDamage = DamageSpecifier.ApplyModifierSets(damage + hitEvent.BonusDamage + attackedEvent.BonusDamage, hitEvent.ModifiersList);
-        var damageResult = Damageable.TryChangeDamage(target, modifiedDamage, origin: user, ignoreResistances: resistanceBypass);
 
-        if (damageResult is { Empty: false })
+        if (Damageable.TryChangeDamage(target.Value, modifiedDamage, out var damageResult, origin:user, ignoreResistances:resistanceBypass))
         {
             // If the target has stamina and is taking blunt damage, they should also take stamina damage based on their blunt to stamina factor
             if (damageResult.DamageDict.TryGetValue("Blunt", out var bluntDamage))
@@ -561,9 +586,10 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
 
         _meleeSound.PlayHitSound(target.Value, user, GetHighestDamageSound(modifiedDamage, _protoManager), hitEvent.HitSoundOverride, component);
 
-        if (damageResult?.GetTotal() > FixedPoint2.Zero)
+        if (damageResult.GetTotal() > FixedPoint2.Zero)
         {
             DoDamageEffect(targets, user, targetXform);
+            DoScreenshake(meleeUid, damageResult, user, targets); // Starlight | ES Screenshake
         }
 
         // Starlight-start
@@ -698,9 +724,9 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
             RaiseLocalEvent(entity, attackedEvent);
             var modifiedDamage = DamageSpecifier.ApplyModifierSets(damage + hitEvent.BonusDamage + attackedEvent.BonusDamage, hitEvent.ModifiersList);
 
-            var damageResult = Damageable.TryChangeDamage(entity, modifiedDamage, origin: user, ignoreResistances: resistanceBypass);
+            var damageResult = Damageable.ChangeDamage(entity, modifiedDamage, origin: user, ignoreResistances: resistanceBypass);
 
-            if (damageResult != null && damageResult.GetTotal() > FixedPoint2.Zero)
+            if (damageResult.GetTotal() > FixedPoint2.Zero)
             {
                 // If the target has stamina and is taking blunt damage, they should also take stamina damage based on their blunt to stamina factor
                 if (damageResult.DamageDict.TryGetValue("Blunt", out var bluntDamage))
@@ -734,6 +760,7 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
         if (appliedDamage.GetTotal() > FixedPoint2.Zero)
         {
             DoDamageEffect(targets, user, Transform(targets[0]));
+            DoScreenshake(meleeUid, damage, user, targets); // Starlight | ES Screenshake
         }
 
         // Starlight-start
@@ -837,6 +864,12 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
             chance += malus.Malus;
         }
 
+        //Starlight begin
+        if (TryComp<WieldableComponent>(inTargetHand, out var wieldable))
+            if (wieldable.Wielded)
+                chance += wieldable.DisarmMalus;
+        //Starlight end
+
         return Math.Clamp(chance, 0f, 1f);
     }
 
@@ -861,6 +894,8 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
         {
             return false;
         }
+
+        if (HasComp<NoDisarmComponent>(target)) return false; // Starlight
 
         // Need hands or to be able to be shoved over.
         if (!TryComp<HandsComponent>(target, out var targetHandsComponent))
@@ -959,9 +994,13 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
 
     private void DoLungeAnimation(EntityUid user, EntityUid weapon, Angle angle, MapCoordinates coordinates, float length, string? animation)
     {
+        // Starlight Begin - mech wideswing handling
+        var originEntity = GetOriginEntity(user);
+
         // TODO: Assert that offset eyes are still okay.
-        if (!TryComp(user, out TransformComponent? userXform))
+        if (!TryComp(originEntity, out TransformComponent? userXform))
             return;
+        // Starlight End
 
         var invMatrix = TransformSystem.GetInvWorldMatrix(userXform);
         var localPos = Vector2.Transform(coordinates.Position, invMatrix);
@@ -1057,4 +1096,51 @@ public abstract class SharedMeleeWeaponSystem : EntitySystem
             }
         }
     }
+
+    //Starlight begin | ES Screenshake
+    private void DoScreenshake(EntityUid weapon, DamageSpecifier damage, EntityUid attacker, List<EntityUid> targets)
+    {
+        if(damage.GetTotal()>8) // only show to others if it hurts real bad
+        {
+            var otherTranslation = new ScreenshakeParameters
+            {
+                Trauma = 0.45f,
+                DecayRate = 1.1f,
+                Frequency = 0.04f,
+            };
+            foreach(var target in targets)
+                _shake.Screenshake(target, otherTranslation, null);
+        }
+
+        // only show to attacker if they put real oompf into it, or the weapon is just THAT strong
+        var bluntRequirement = damage.DamageDict.TryGetValue(BluntDamageName, out var blunt) && blunt >= 20;
+        var wieldRequirement = TryComp<WieldableComponent>(weapon, out var wieldable) && wieldable.Wielded;
+
+        if (!bluntRequirement && !wieldRequirement)
+            return;
+        var userRotation = new ScreenshakeParameters
+        {
+            Trauma = 0.08f,
+            DecayRate = 1,
+            Frequency = 0.009f,
+        };
+        _shake.Screenshake(attacker, null, userRotation);
+    }
+    //Starlight end
+
+    // Starlight begin - mech wideswing
+    /// <summary>
+    /// Get the apparent origin entity for transforms (e.g. when the entity is piloting a mech)
+    /// returns the user if none are found
+    /// </summary>
+    protected EntityUid GetOriginEntity(EntityUid user)
+    {
+        var originEntity = user;
+        var originEv = new GetMeleeOriginEvent();
+        RaiseLocalEvent(user, originEv);
+        if (originEv.Handled && originEv.OriginEntity.HasValue)
+            originEntity = originEv.OriginEntity.Value;
+        return originEntity;
+    }
+    // Starlight end
 }

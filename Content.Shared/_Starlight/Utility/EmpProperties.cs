@@ -6,12 +6,12 @@ namespace Content.Shared.Starlight.Utility;
 
 [Serializable, NetSerializable]
 [DataDefinition]
-public partial class EmpProperties
+public sealed partial class EmpProperties
 {
-    
+
     [DataField("range"), ViewVariables(VVAccess.ReadWrite)]
     public float Range = 1.0f;
-    
+
     /// <summary>
     /// How much energy will be consumed per battery in range
     /// </summary>
@@ -22,9 +22,9 @@ public partial class EmpProperties
     /// How long it disables targets in seconds
     /// </summary>
     [DataField("disableDuration"), ViewVariables(VVAccess.ReadWrite)]
-    public float DisableDuration = 60f;
+    public TimeSpan DisableDuration = TimeSpan.FromSeconds(60);
 
-    public EmpProperties(float range, float energyConsumption, float disableDuration)
+    public EmpProperties(float range, float energyConsumption, TimeSpan disableDuration)
     {
         Range = range;
         EnergyConsumption = energyConsumption;

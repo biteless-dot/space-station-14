@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Text.Json.Serialization;
+using Content.Shared.Damage.Components;
 using Content.Shared.Damage.Prototypes;
 using Content.Shared.FixedPoint;
 using JetBrains.Annotations;
@@ -20,6 +21,11 @@ namespace Content.Shared.Damage
     [DataDefinition, Serializable, NetSerializable]
     public sealed partial class DamageSpecifier : IEquatable<DamageSpecifier>
     {
+        // For the record I regret so many of the decisions i made when rewriting damageable
+        // Why is it just shitting out dictionaries left and right
+        // One day Arrays, stackalloc spans, and SIMD will save the day.
+        // TODO DAMAGEABLE REFACTOR
+
         // These exist solely so the wiki works. Please do not touch them or use them.
         [JsonPropertyName("types")]
         [DataField("types", customTypeSerializer: typeof(PrototypeIdDictionarySerializer<FixedPoint2, DamageTypePrototype>))]
@@ -164,7 +170,7 @@ namespace Content.Shared.Damage
                     newValue = Math.Max(0f, newValue - (reduction - (reduction * armorPenetration))); // flat reductions can't heal you
 
                 // ??Starlight?? start
-                if (canHeal)  
+                if (canHeal)
                 {
                     if (modifierSet.Coefficients.TryGetValue(key, out var coefficient))
                         newValue *= (coefficient + ((1f - coefficient) * armorPenetration)); // coefficients can heal you, e.g. cauterizing bleeding, Starlight change: removed maximum coefficent allowing for weaknesses

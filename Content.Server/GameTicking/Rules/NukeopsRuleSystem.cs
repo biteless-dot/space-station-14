@@ -11,8 +11,6 @@ using Content.Server.Shuttles.Systems;
 using Content.Server.Station.Components;
 using Content.Server.Store.Systems;
 using Content.Shared.GameTicking.Components;
-using Content.Shared.Mobs;
-using Content.Shared.Mobs.Components;
 using Content.Shared.NPC.Components;
 using Content.Shared.NPC.Systems;
 using Content.Shared.Nuke;
@@ -27,16 +25,25 @@ using Robust.Shared.Utility;
 using System.Linq;
 using Content.Shared.Station.Components;
 using Content.Shared.Store.Components;
-using Content.Server.Starlight.Antags.Abductor;
+// Starlight Start
+using Content.Shared.Mobs;
+using Content.Shared.Mobs.Components;
+using Content.Shared.Cuffs.Components;
+using Content.Shared.Cuffs;
 using Prometheus;
-using Robust.Shared.Prototypes; // Starlight
+using Robust.Shared.Prototypes;
+using Content.Server.AlertLevel;
+using Content.Server._Starlight.Station;
+using Content.Shared.Starlight.CCVar;
+using Robust.Shared.Configuration;
+// Starlight End
 
 namespace Content.Server.GameTicking.Rules;
 
 public sealed class NukeopsRuleSystem : GameRuleSystem<NukeopsRuleComponent>
 {
     #region Starlight data collection
-    private static readonly Histogram _nukeopsCount = Metrics.CreateHistogram(
+    private static readonly Counter _nukeopsCount = Metrics.CreateCounter(
         "nukie_count",
         "Number of all nukies Win/Loses Count.",
         ["results"]);
@@ -49,10 +56,15 @@ public sealed class NukeopsRuleSystem : GameRuleSystem<NukeopsRuleComponent>
     [Dependency] private readonly RoundEndSystem _roundEndSystem = default!;
     [Dependency] private readonly StoreSystem _store = default!;
     [Dependency] private readonly TagSystem _tag = default!;
+    // Starlight Start
+    [Dependency] private readonly SharedCuffableSystem _cuffable = default!;
+    [Dependency] private readonly AlertLevelSystem _alertLevel = default!;
+    [Dependency] private readonly StationCrewCountSystem _stationCrewCount = default!;
+    [Dependency] private readonly IConfigurationManager _cfg = default!;
+    // Starlight End
 
     private static readonly ProtoId<CurrencyPrototype> TelecrystalCurrencyPrototype = "Telecrystal";
     private static readonly ProtoId<TagPrototype> NukeOpsUplinkTagPrototype = "NukeOpsUplink";
-
 
     public override void Initialize()
     {
@@ -74,6 +86,8 @@ public sealed class NukeopsRuleSystem : GameRuleSystem<NukeopsRuleComponent>
 
         SubscribeLocalEvent<NukeopsRuleComponent, AfterAntagEntitySelectedEvent>(OnAfterAntagEntSelected);
         SubscribeLocalEvent<NukeopsRuleComponent, RuleLoadedGridsEvent>(OnRuleLoadedGrids);
+
+        SubscribeLocalEvent<NukeOperativeComponent, CuffedStateChangeEvent>(OnNukieCuffStateChanged); // Starlight: Check when nukie is cuffed
     }
 
     protected override void Started(EntityUid uid,
@@ -95,6 +109,8 @@ public sealed class NukeopsRuleSystem : GameRuleSystem<NukeopsRuleComponent>
             return;
 
         component.TargetStation = RobustRandom.Pick(eligible);
+        var ev = new NukeopsTargetStationSelectedEvent(uid, component.TargetStation);
+        RaiseLocalEvent(ref ev);
     }
 
     #region Event Handlers
@@ -120,6 +136,7 @@ public sealed class NukeopsRuleSystem : GameRuleSystem<NukeopsRuleComponent>
         {
             args.AddLine(Loc.GetString("nukeops-list-name-user", ("name", name), ("user", sessionData.UserName)));
         }
+        args.AddLine("");
     }
 
     private void OnNukeExploded(NukeExplodedEvent ev)
@@ -166,7 +183,7 @@ public sealed class NukeopsRuleSystem : GameRuleSystem<NukeopsRuleComponent>
 
             if (GameTicker.IsGameRuleActive("Nukeops")) // If it's Nukeops then end the round on any detonation
             {
-                _roundEndSystem.EndRound();
+                _roundEndSystem.EndRound(TimeSpan.FromSeconds(_cfg.GetCVar(StarlightCCVars.NukeRoundRestartTime))); // Starlight Edit: Round end timer set by Cvar
             }
             else
             { // It's a LoneOp. Only end the round if the station was destroyed
@@ -175,7 +192,7 @@ public sealed class NukeopsRuleSystem : GameRuleSystem<NukeopsRuleComponent>
                 {
                     if (cond.ToString().ToLower() == "NukeExplodedOnCorrectStation") // If this is true, then the nuke destroyed the station! It's likely everyone is very dead so keeping the round going is pointless.
                     {
-                        _roundEndSystem.EndRound(); // end the round!
+                        _roundEndSystem.EndRound(TimeSpan.FromSeconds(_cfg.GetCVar(StarlightCCVars.NukeRoundRestartTime))); // end the round! // Starlight Edit: Round end timer set by Cvar
                         handled = true;
                         break;
                     }
@@ -294,6 +311,10 @@ public sealed class NukeopsRuleSystem : GameRuleSystem<NukeopsRuleComponent>
         RemCompDeferred(uid, component);
     }
 
+    // Starlight Start: Check round end when nukie is cuffed/uncuffed
+    private void OnNukieCuffStateChanged(EntityUid uid, NukeOperativeComponent component, ref CuffedStateChangeEvent args) => CheckRoundShouldEnd();
+    // Starlight End
+
     private void OnRuleLoadedGrids(Entity<NukeopsRuleComponent> ent, ref RuleLoadedGridsEvent args)
     {
         // Check each nukie shuttle
@@ -403,6 +424,19 @@ public sealed class NukeopsRuleSystem : GameRuleSystem<NukeopsRuleComponent>
 
     private void DistributeExtraTc(Entity<NukeopsRuleComponent> nukieRule)
     {
+        // Starlight-start
+        var crewCount = _stationCrewCount.GetTotalCrewCount();
+
+        // TC scaling begins at threshold crew count of 80 and maxes out at 200
+        const int TcScaleStart = 80;
+        const int TcScaleCap = 200;
+
+        var clampedCrewCount =  Math.Clamp(crewCount, TcScaleStart, TcScaleCap);
+
+        // +1 bonus TC per 5 crew members
+        var scaledTc = (clampedCrewCount - TcScaleStart) / 5;
+        // Starlight-end
+
         var enumerator = EntityQueryEnumerator<StoreComponent>();
         while (enumerator.MoveNext(out var uid, out var component))
         {
@@ -415,7 +449,7 @@ public sealed class NukeopsRuleSystem : GameRuleSystem<NukeopsRuleComponent>
             if (Transform(uid).MapID != Transform(outpost).MapID) // Will receive bonus TC only on their start outpost
                 continue;
 
-            _store.TryAddCurrency(new() { { TelecrystalCurrencyPrototype, nukieRule.Comp.WarTcAmountPerNukie } }, uid, component);
+            _store.TryAddCurrency(new() { { TelecrystalCurrencyPrototype, nukieRule.Comp.WarTcAmountPerNukie + scaledTc } }, uid, component); // Starlight-edit
 
             var msg = Loc.GetString("store-currency-war-boost-given", ("target", uid));
             _popupSystem.PopupEntity(msg, uid);
@@ -426,10 +460,10 @@ public sealed class NukeopsRuleSystem : GameRuleSystem<NukeopsRuleComponent>
     {
         ent.Comp.WinType = type;
 
-        _nukeopsCount.WithLabels(type.ToString()).Observe(1); // Starlight
+        _nukeopsCount.WithLabels(type.ToString()).Inc(1); // Starlight
 
         if (endRound && (type == WinType.CrewMajor || type == WinType.OpsMajor))
-            _roundEndSystem.EndRound();
+            _roundEndSystem.EndRound(TimeSpan.FromSeconds(_cfg.GetCVar(StarlightCCVars.NukeRoundRestartTime))); // Starlight Edit: Round end timer set by Cvar
     }
 
     private void CheckRoundShouldEnd()
@@ -473,12 +507,23 @@ public sealed class NukeopsRuleSystem : GameRuleSystem<NukeopsRuleComponent>
         // Check if there are nuke operatives still alive on the same map as the shuttle,
         // or on the same map as the station.
         // If there are, the round can continue.
-        var operatives = EntityQuery<NukeOperativeComponent, MobStateComponent, TransformComponent>(true);
-        var operativesAlive = operatives
-            .Where(op =>
-                op.Item3.MapID == shuttleMapId
-                || op.Item3.MapID == targetStationMap)
-            .Any(op => op.Item2.CurrentState == MobState.Alive && op.Item1.Running);
+        // Starlight edit Start: Nukies cuff loss check
+        var operatives = EntityQueryEnumerator<NukeOperativeComponent, MobStateComponent, TransformComponent>();
+        var operativesAlive = false;
+        while (operatives.MoveNext(out var uid, out var nukeOp, out var mobState, out var xform))
+        {
+            // Check if alive
+            if (mobState.CurrentState != MobState.Alive || !nukeOp.Running)
+                continue;
+
+            // Check if cuffed
+            if (TryComp<CuffableComponent>(uid, out var cuffable) && _cuffable.IsCuffed((uid, cuffable)))
+                continue;
+
+            operativesAlive = true;
+            break;
+        }
+        // Starlight edit end
 
         if (operativesAlive)
             return; // There are living operatives than can access the shuttle, or are still on the station's map.
@@ -499,12 +544,15 @@ public sealed class NukeopsRuleSystem : GameRuleSystem<NukeopsRuleComponent>
         if (nukeops.RoundEndBehavior == RoundEndBehavior.Nothing) // It's still worth checking if operatives have all died, even if the round-end behaviour is nothing.
             return; // Shouldn't actually try to end the round in the case of nothing though.
 
+        // Starlight - Set the station to green alert so its not locked anymore to Gamma.
+        if (nukeops.TargetStation is not null)
+            _alertLevel.SetLevel(nukeops.TargetStation.Value, "green", true, true, true, false);
+
         _roundEndSystem.DoRoundEndBehavior(nukeops.RoundEndBehavior,
         nukeops.EvacShuttleTime,
         nukeops.RoundEndTextSender,
         nukeops.RoundEndTextShuttleCall,
         nukeops.RoundEndTextAnnouncement);
-
 
         // prevent it called multiple times
         nukeops.RoundEndBehavior = RoundEndBehavior.Nothing;
@@ -558,4 +606,21 @@ public sealed class NukeopsRuleSystem : GameRuleSystem<NukeopsRuleComponent>
 
         return null;
     }
+}
+
+/// <summary>
+/// Raised when a station has been assigned as a target for the NukeOps rule.
+/// </summary>
+[ByRefEvent]
+public readonly struct NukeopsTargetStationSelectedEvent(EntityUid ruleEntity, EntityUid? targetStation)
+{
+    /// <summary>
+    /// The entity containing the NukeOps gamerule.
+    /// </summary>
+    public readonly EntityUid RuleEntity = ruleEntity;
+
+    /// <summary>
+    /// The target station, if it exists.
+    /// </summary>
+    public readonly EntityUid? TargetStation = targetStation;
 }

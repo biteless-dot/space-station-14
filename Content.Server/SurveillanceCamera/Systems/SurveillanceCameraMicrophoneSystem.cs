@@ -1,6 +1,8 @@
 using Content.Server.Chat.Systems;
+using Content.Shared._Starlight.Language;
 using Content.Shared.Speech;
 using Content.Shared.Speech.Components;
+using Content.Shared.SurveillanceCamera.Components;
 using Content.Shared.Whitelist;
 using Robust.Shared.Player;
 using static Content.Server.Chat.Systems.ChatSystem;
@@ -61,7 +63,7 @@ public sealed class SurveillanceCameraMicrophoneSystem : EntitySystem
     public void CanListen(EntityUid uid, SurveillanceCameraMicrophoneComponent microphone, ListenAttemptEvent args)
     {
         // TODO maybe just make this a part of ActiveListenerComponent?
-        if (_whitelistSystem.IsBlacklistPass(microphone.Blacklist, args.Source))
+        if (_whitelistSystem.IsWhitelistPass(microphone.Blacklist, args.Source))
             args.Cancel();
     }
 
@@ -70,7 +72,7 @@ public sealed class SurveillanceCameraMicrophoneSystem : EntitySystem
         if (!TryComp(uid, out SurveillanceCameraComponent? camera))
             return;
 
-        var ev = new SurveillanceCameraSpeechSendEvent(args.Source, args.Message);
+        var ev = new SurveillanceCameraSpeechSendEvent(args.Source, args.Message, args.Language); //Starlight
 
         foreach (var monitor in camera.ActiveMonitors)
         {
@@ -99,11 +101,13 @@ public sealed class SurveillanceCameraSpeechSendEvent : EntityEventArgs
 {
     public EntityUid Speaker { get; }
     public string Message { get; }
+    public LanguagePrototype? Language { get; } //Starlight
 
-    public SurveillanceCameraSpeechSendEvent(EntityUid speaker, string message)
+    public SurveillanceCameraSpeechSendEvent(EntityUid speaker, string message, LanguagePrototype? language) //Starlight
     {
         Speaker = speaker;
         Message = message;
+        Language = language; //Starlight
     }
 }
 

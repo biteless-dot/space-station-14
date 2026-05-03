@@ -34,7 +34,7 @@
       - PosterContrabandFreeTonto
       - PosterContrabandAtmosiaDeclarationIndependence
       - PosterContrabandFunPolice
-      - PosterContrabandLustyExomorph
+      - PosterContrabandHereticalExomorph # Starlight
       - PosterContrabandSyndicateRecruitment
       - PosterContrabandClown
       - PosterContrabandSmoke
@@ -64,7 +64,7 @@
       - PosterContrabandPunchShit
       - PosterContrabandTheGriffin
       - PosterContrabandFreeDrone
-      - PosterContrabandBustyBackdoorExoBabes6
+#      - PosterContrabandBustyBackdoorExoBabes6 # Starlight
       - PosterContrabandRobustSoftdrinks
       - PosterContrabandShamblersJuice
       - PosterContrabandPwrGame
@@ -106,10 +106,14 @@
       - PosterContrabandWantedFreak
       - PosterContrabandWantedIan
       - PosterContrabandWantedJohnToe
-      - PosterContrabandWantedMimeSexy
+      - PosterContrabandWantedMime
       - PosterContrabandWantedPunPun
       - PosterContrabandWantedStirStir
       - PosterContrabandWantedTraitor
+      - PosterContrabandSELF
+      - PosterContrabandInterdyneSyndicate
+      - PosterContrabandComitas
+      - PosterContrabandWaffleCorpTwo
       #endregion Starlight
     chance: 1
 
@@ -180,6 +184,7 @@
       - PosterLegitEyeChart
       - PosterLegitTyrone
       - PosterLegitHelio
+      - PosterLegitBotanyFear
       #region Starlight
       - PosterLegitSkillIssue
       - PosterLegitShoeless
@@ -192,5 +197,9 @@
       - PosterLegitKillersClinic
       - PosterlegitLawPoster
       - PosterLegitSaline
+      - PosterLegitKeepItClean
+      - PosterLegitClock
+      - PosterLegitBonk
+      - PosterLegitDeforestMedical
       #endregion Starlight
     chance: 1

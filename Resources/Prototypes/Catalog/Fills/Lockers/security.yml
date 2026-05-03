@@ -26,15 +26,16 @@
   id: FillLockerWarden
   table: !type:AllSelector
     children:
-    - id: WeaponEnergyShotgun #Starlight
     - id: ClothingEyesHudSecurity #Starlight
     - id: ClothingHeadsetSecurityWarden #Starlight
+    - id: WeaponEnergyShotgun #Starlight
     - id: FlashlightSeclite
     - id: WeaponDisabler
+    - id: WeaponTaser
     - id: ClothingBeltSecurityFilled
     - id: Flash
     - id: ClothingEyesGlassesSecurity
-    - id: ClothingHandsGlovesCombat
+#    - id: ClothingHandsGlovesCombat # Starlight, they spawn with these now.
     - id: ClothingShoesBootsJack
     - id: ClothingOuterCoatWarden
     - id: ClothingOuterWinterWarden
@@ -48,6 +49,7 @@
       amount: 2
     - id: NetworkConfigurator
     - id: Binoculars
+    - id: NeuralLinkDisruptor # Starlight
 
 - type: entityTable
   id: FillLockerWardenHarduit
@@ -56,6 +58,7 @@
     - id: ClothingOuterHardsuitWarden
     - id: OxygenTankFilled
     - id: NitrogenTankFilled # Starlight - vox gang
+    - id: CoolingUnit # Starlight - Beep, Boop!
     - id: ClothingMaskBreath
 
 - type: entity
@@ -77,6 +80,7 @@
     - id: FlashlightSeclite
       prob: 0.8
     - id: WeaponDisabler
+    - id: WeaponTaser
     - id: ClothingUniformJumpsuitSecGrey
       prob: 0.3
     - id: ClothingHeadHelmetBasic
@@ -109,17 +113,22 @@
   id: FillLockerBrigmedic
   table: !type:AllSelector
     children:
+    - id: ClothingEyesGlassesBrigmedic # Starlight
+    - id: ClothingEyesGlassesCorpsman # Starlight
     - id: ClothingOuterCoatCorpsman #Starlight
     - id: ClothingUniformJumpsuitCorpsman #Starlight
     - id: ClothingUniformJumpskirtCorpsman #Starlight
     - id: ClothingHeadHatBeretCorpsman #Starlight
     - id: ClothingBeltCorpsmanFilled #Starlight
     - id: ClothingHandsGlovesBlackNitrile #Starlight
-    - id: ClothingEyesGlassesSecurity #Starlight
+#    - id: ClothingEyesGlassesSecurity #Starlight, replacing with brigmed glasses.
+    - id: WeaponTaser
     - id: WeaponDisabler
     - id: TrackingImplanter
       amount: 2
     - id: ClothingOuterHardsuitBrigmedic
+    - id: ClothingShoesBootsMagSec # Starlight. They seem to have vanished.
+    - id: RubberStampBrigmedic # Starlight. Also seems to have vanished.
     - id: BoxSterileMask
     - id: ClothingHeadHatBeretBrigmedic
     - id: ClothingOuterCoatAMG
@@ -127,7 +136,11 @@
     - id: ClothingUniformJumpskirtBrigmedic
     - id: ClothingUniformJumpskirtOfLife
       prob: 0.1
+    - id: ClothingUniformJumpsuitOfLife # Starlight
+      prob: 0.1 # Starlight
     - id: MedkitFilled
+    - id: BedsheetBrigmedicStrange # Starlight
+    - id: BedsheetBrigmedic # Starlight
     - !type:GroupSelector
       prob: 0.7
       children:
@@ -146,6 +159,7 @@
       prob: 0.15
     - id: PlushieMorgana #starlight
     - id: PlushieKiller #starlight
+    - id: JawsOfLifeMed #Starlight
 
 
 - type: entity
@@ -163,6 +177,7 @@
   table: !type:AllSelector
     children:
     - id: ClothingEyesGlassesNoir
+    - id: WeaponEnergyMagnum #Starlight
     - id: ClothingHeadHatFedoraBrown #Starlight
     - id: ClothingHeadHatDetGadget
     - id: ClothingNeckTieDet
@@ -179,6 +194,7 @@
     - id: HoloprojectorSecurity
     - id: BoxEvidenceMarkers
     - id: HandLabeler
+    - id: BoxTapeRecorder # Starlight
 
 - type: entity
   id: ClosetBombFilled
@@ -232,20 +248,17 @@
   id: FillGunSafePistolMk58
   table: !type:AllSelector
     children:
+    - id: BoxFiringPinPistol # Starlight, firing pins
     - id: WeaponPistolMk58
       amount: 2
     - id: WeaponPistolEnforcer
       amount: 1
-    #- id: WeaponMachinePistolMk64
-      #amount: 1
     - id: MagazinePistolSP
       amount: 4
     - id: MagazinePistolHP
       amount: 2
     - id: MagazinePistolFMJ
       amount: 2
-    #- id: MagazinePistolHighCapacitySP
-      #amount: 2
 
 - type: entity
   parent: [GunSafeBaseSecure, BaseSecurityContraband]
@@ -261,14 +274,15 @@
   id: FillGunSafeRifleLecter
   table: !type:AllSelector
     children:
+    - id: BoxFiringPin # Starlight, firing pins
     - id: WeaponRifleLecter
-      amount: 1
+      amount: 2 # Starlight
     - id: WeaponRifleLeikha
       amount: 1
     - id: MagazineRifleHP
-      amount: 3
+      amount: 4 # Starlight
     - id: MagazineRifleSP
-      amount: 3
+      amount: 4 # Starlight
 
 - type: entity
   parent: [GunSafeBaseSecure, BaseSecurityContraband]
@@ -284,12 +298,13 @@
   id: FillGunSafeSubMachineGunDrozd
   table: !type:AllSelector
     children:
+    - id: BoxFiringPinPistol # Starlight, firing pins
     - id: WeaponSubMachineGunDrozd
-      amount: 1
+      amount: 2 # Starlight
     - id: WeaponSubMachineGunSP91RC
       amount: 2
     - id: MagazinePistolSubMachineGunSP
-      amount: 4
+      amount: 5 # Starlight
 
 - type: entity
   parent: [GunSafeBaseSecure, BaseSecurityContraband]
@@ -305,6 +320,7 @@
   id: FillGunSafeShotgunEnforcer
   table: !type:AllSelector
     children:
+    - id: BoxFiringPin # Starlight, firing pins
     - id: SpeedLoaderMagnumBasic
       amount: 2
     - id: WeaponShotgunEnforcer
@@ -328,6 +344,7 @@
   id: FillGunSafeShotgunKammerer
   table: !type:AllSelector
     children:
+    - id: BoxFiringPin # Starlight, firing pins
     - id: SpeedLoaderMagnumBasic
       amount: 2
     - id: WeaponShotgunKammerer
@@ -352,6 +369,7 @@
   id: FillGunSafeSubMachineGunWt550
   table: !type:AllSelector
     children:
+    - id: BoxFiringPinPistol # Starlight, firing pins
     - id: WeaponSubMachineGunWt550
       amount: 2
     - id: MagazinePistolSubMachineGunTopMounted
@@ -371,5 +389,10 @@
   id: FillGunSafeLaserCarbine
   table: !type:AllSelector
     children:
+    - id: BoxFiringPinLaser # Starlight, firing pins
     - id: WeaponLaserCarbine
-      amount: 4
+      amount: 3
+    - id: WeaponLr30
+      amount: 1
+    - id: MagazineBatteryLr30
+      amount: 2

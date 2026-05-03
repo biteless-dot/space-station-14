@@ -1,10 +1,10 @@
 using Content.Server.Administration.Logs;
 using Content.Server.Atmos.EntitySystems;
-using Content.Server.Temperature.Components;
 using Content.Server.Temperature.Systems;
 using Content.Shared.ActionBlocker;
 using Content.Shared.Alert;
 using Content.Shared.Atmos;
+using Content.Shared.Damage.Systems;
 using Content.Shared.Damage;
 using Content.Shared.Database;
 using Content.Shared.Destructible;
@@ -17,6 +17,7 @@ using Content.Shared.Starlight.EntityEffects.EntitySystems;
 using Content.Shared.Starlight.EntityEffects;
 using Content.Shared.Stunnable;
 using Content.Shared.Tag;
+using Content.Shared.Temperature.Components;
 using Content.Shared.Temperature;
 using Robust.Shared.Physics.Components;
 using Robust.Shared.Timing;
@@ -41,12 +42,12 @@ public sealed class DissolvableSystem : SharedDissolvableSystem
     public override void Initialize()
     {
         UpdatesAfter.Add(typeof(AtmosphereSystem));
-        
+
         SubscribeLocalEvent<ThermiteComponent, InteractUsingEvent>(OnInteractUsing);
-        
+
         SubscribeLocalEvent<DissolvableComponent, DestructionEventArgs>(OnDestruction);
     }
-    
+
     private void OnInteractUsing(EntityUid uid, ThermiteComponent thermite, InteractUsingEvent args)
     {
         if (args.Handled)
@@ -57,19 +58,19 @@ public sealed class DissolvableSystem : SharedDissolvableSystem
 
         if (!isHotEvent.IsHot || (thermite.requiredTag != null && !_tagSystem.HasTag(args.Used, thermite.requiredTag!)))
             return;
-        
+
         foreach (var dissolvable in _lookupSystem.GetEntitiesInRange<DissolvableComponent>(_transform.GetMapCoordinates(uid), 1f))
         {
             if (dissolvable.Comp.DissolveStacks > 0 && !dissolvable.Comp.OnDissolve)
                 Dissolve(dissolvable.Owner, args.Used, dissolvable.Comp, args.User);
         }
-        
+
         foreach (var thermiteEnt in _lookupSystem.GetEntitiesInRange<ThermiteComponent>(_transform.GetMapCoordinates(uid), 1f))
             EntityManager.QueueDeleteEntity(thermiteEnt.Owner);
-        
+
         args.Handled = true;
     }
-    
+
     private void OnDestruction(EntityUid uid, DissolvableComponent dissolvable, DestructionEventArgs args)
     {
         Extinguish(uid, dissolvable);
@@ -90,7 +91,7 @@ public sealed class DissolvableSystem : SharedDissolvableSystem
             else
                 _adminLogger.Add(LogType.Flammable, $"{ToPrettyString(uid):target} set on dissolve by {ToPrettyString(dissolveSource):actor}");
             dissolvable.OnDissolve = true;
-            
+
             dissolvable.Effect = Spawn("ThermiteFire", _transform.GetMapCoordinates(uid));
 
             var extinguished = new IgnitedEvent();
@@ -130,7 +131,7 @@ public sealed class DissolvableSystem : SharedDissolvableSystem
             Dissolve(dissolveableEntity, dissolveableEntity, dissolvable);
         }
         _dissolveEvets.Clear();
-        
+
         var toProcess = new List<EntityUid>();
 
         var query = EntityQueryEnumerator<DissolvableComponent, TransformComponent>();

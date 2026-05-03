@@ -1,3 +1,4 @@
+using Content.Shared._Starlight.GameTicking.Components;
 using Content.Shared.Administration.Logs;
 using Content.Shared.Charges.Components;
 using Content.Shared.Charges.Systems;
@@ -9,6 +10,7 @@ using Content.Shared.Popups;
 using Content.Shared.Tag;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Serialization;
+using PreventEorgComponent = Content.Shared._Starlight.EndOfRoundGriefing.Components.PreventEorgComponent;
 
 namespace Content.Shared.Emag.Systems;
 
@@ -61,6 +63,12 @@ public sealed class EmagSystem : EntitySystem
         if (_tag.HasTag(target, ent.Comp.EmagImmuneTag))
             return false;
 
+        if (HasComp<PreventEorgComponent>(user)) // Starlight BEGIN
+        {
+            _popup.PopupClient(Loc.GetString("eorg-action"), user, PopupType.LargeCaution);
+            return false;
+        } // Starlight END
+
         Entity<LimitedChargesComponent?> chargesEnt = ent.Owner;
         if (_sharedCharges.IsEmpty(chargesEnt))
         {
@@ -85,33 +93,43 @@ public sealed class EmagSystem : EntitySystem
         if (emaggedEvent.Handled)
             _sharedCharges.TryUseCharge(chargesEnt);
 
+        // Starlight begin
+        EnsureComp<EmaggedComponent>(target, out var emaggedComp);
+        emaggedComp.OwningFaction = ent.Comp.OwningFaction;
+        Dirty(target, emaggedComp);
+
         if (!emaggedEvent.Repeatable)
         {
-            EnsureComp<EmaggedComponent>(target, out var emaggedComp);
-
             emaggedComp.EmagType |= typeToUse;
             Dirty(target, emaggedComp);
         }
+        // Starlight end
 
         return emaggedEvent.Handled;
     }
 
+    // Starlight begin
     /// <summary>
     /// Checks whether an entity has the EmaggedComponent with a set flag.
     /// </summary>
     /// <param name="target">The target entity to check for the flag.</param>
     /// <param name="flag">The EmagType flag to check for.</param>
+    /// <param name="emag">The component of the emag being used. If specified, will bypass the check if the emag factions differ.</param>
     /// <returns>True if entity has EmaggedComponent and the provided flag. False if the entity lacks EmaggedComponent or provided flag.</returns>
-    public bool CheckFlag(EntityUid target, EmagType flag)
+    public bool CheckFlag(EntityUid target, EmagType flag, EmagComponent? emag = null)
     {
         if (!TryComp<EmaggedComponent>(target, out var comp))
             return false;
 
         if ((comp.EmagType & flag) == flag)
-            return true;
+        {
+            if (emag is null) return true;
+            return emag.OwningFaction == comp.OwningFaction;
+        }
 
         return false;
     }
+    // Starlight end
 
     /// <summary>
     /// Compares a flag to the target.

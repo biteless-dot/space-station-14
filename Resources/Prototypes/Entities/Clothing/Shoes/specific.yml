@@ -120,6 +120,8 @@
   - type: SpeedModifierContactCapClothing
     maxContactSprintSlowdown: 0.7
     maxContactWalkSlowdown: 0.7
+  - type: StealTarget # Starlight
+    stealGroup: GaloshesCollection # Starlight
 
 - type: entity
   parent: [ClothingShoesBaseButcherable, BaseHighlyIllegalContraband]
@@ -170,7 +172,9 @@
   description: Stylish black shoes.
   components:
     - type: Tag
-      tags: [] # ignore "WhitelistChameleon" tag
+      tags: # ignore "WhitelistChameleon" tag
+      - ClothMade
+      - Recyclable
     - type: Sprite
       sprite: Clothing/Shoes/color.rsi
       layers:

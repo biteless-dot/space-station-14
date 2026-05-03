@@ -3,6 +3,26 @@ namespace Content.Shared.Humanoid;
 public static class EyeColor
 {
     public const float ShadekinBrightness = 0.251f;
+    public const float BrighteyeBrightness = 1;
+
+    public static bool VerifyBrighteye(Color color)
+    {
+        var colorHsv = Color.ToHsv(color);
+
+        if (colorHsv.Z < BrighteyeBrightness)
+            return false;
+
+        return true;
+    }
+
+    public static Color MakeBrighteyeValid(Color color)
+    {
+        var hsv = Color.ToHsv(color);
+
+        hsv.Z = BrighteyeBrightness;
+
+        return Color.FromHsv(hsv);
+    }
 
     public static bool VerifyShadekin(Color color)
     {
@@ -23,11 +43,22 @@ public static class EyeColor
         return Color.FromHsv(hsv);
     }
 
+    public static bool VerifyFullWhite(Color color)
+    {
+        return color == Color.White;
+    }
+
+    public static Color MakeFullWhiteValid(Color color)
+    {
+        return Color.White;
+    }
+
     public static bool VerifyEyeColor(HumanoidEyeColor type, Color color)
     {
         return type switch
         {
             HumanoidEyeColor.Shadekin => VerifyShadekin(color),
+            HumanoidEyeColor.FullWhite => VerifyFullWhite(color),
             _ => false,
         };
     }
@@ -37,6 +68,7 @@ public static class EyeColor
         return type switch
         {
             HumanoidEyeColor.Shadekin => MakeShadekinValid(color),
+            HumanoidEyeColor.FullWhite => MakeFullWhiteValid(color),
             _ => color
         };
     }
@@ -46,6 +78,7 @@ public enum HumanoidEyeColor : byte
 {
     Standard,
     Shadekin,
+    FullWhite,
 }
 
 [ByRefEvent]

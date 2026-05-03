@@ -2,6 +2,7 @@ using Content.Server.Ghost.Roles.Raffles;
 using Content.Server.Mind.Commands;
 using Content.Shared.Roles;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Serialization;
 
 namespace Content.Server.Ghost.Roles.Components;
 
@@ -14,12 +15,6 @@ public sealed partial class GhostRoleComponent : Component
     [DataField("description")] private string _roleDescription = "Unknown";
 
     [DataField("rules")] private string _roleRules = "ghost-role-component-default-rules";
-
-    // Actually make use of / enforce this requirement?
-    // Why is this even here.
-    // Move to ghost role prototype & respect CCvars.GameRoleTimerOverride
-    [DataField("requirements")]
-    public HashSet<JobRequirement>? Requirements;
 
     /// <summary>
     /// Whether the <see cref="MakeSentientCommand"/> should run on the mob.
@@ -110,5 +105,16 @@ public sealed partial class GhostRoleComponent : Component
     [DataField("job")]
     [Access(typeof(GhostRoleSystem), Other = AccessPermissions.ReadWriteExecute)] // also FIXME Friends
     public ProtoId<JobPrototype>? JobProto = null;
+
+    // Starlight start
+    /// <summary>
+    /// Important Ghost Roles will leave a sound and chat info.
+    /// </summary>
+    [DataField]
+    public bool Important = false;
+
+    [NonSerialized]
+    public bool HasNotifiedGhosts = false;
+    // Starlight end
 }
 

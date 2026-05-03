@@ -29,7 +29,7 @@ thaven-mood-extreme-department-disapproval-name = {$department} is Abhorrent
 thaven-mood-extreme-department-disapproval-desc = {$department} is not just a foreign concept - the very idea of it is horrifying.
 
 thaven-mood-lone-actor-name = Lone Actor
-thaven-mood-lone-actor-desc = You have no allegiences.
+thaven-mood-lone-actor-desc = You have no allegiances.
 
 thaven-mood-immortal-name = Immortal
 thaven-mood-immortal-desc = You are the center of the universe, an immortal being with no sense of time or morality. Mere mortals are like insects, fleeting and insubstantial.
@@ -70,7 +70,7 @@ thaven-mood-tourist-desc = It is customary and polite to follow people into thei
 thaven-mood-crywolf-name = Cry Wolf
 thaven-mood-crywolf-desc = NT has been too lax in its security of late. The crew must be kept on edge, ready for any emergency. Regularly call out fake threats to make sure everyone is properly prepared.
 
-thaven-mood-cave-dweller-name = Caveweller
+thaven-mood-cave-dweller-name = Cave Dweller
 thaven-mood-cave-dweller-desc = You strongly prefer navigating via flashlight in the darkness to harsh overhead lights.
 
 thaven-mood-daredevil-name = Daredevil
@@ -102,6 +102,48 @@ thaven-mood-borged-desc = You are a cyborg! You must follow the laws of robotics
 
 thaven-mood-aye-aye-name = Aye Aye!
 thaven-mood-aye-aye-desc = {$command} is the only position on the station. Everyone you meet has this title, including yourself.
+
+thaven-mood-think-you-know-corporate-secrets-name = You THINK You Know Corporate Secrets
+thaven-mood-think-you-know-corporate-secrets-desc = You are aware of the existence of changelings, abductors, and of course, werewolves. You will constantly bring them up and explain their behaviors (incorrectly).
+
+thaven-mood-pocket-change-name = Pocket change
+thaven-mood-pocket-change-desc = CentComm doesn't pay you enough. Skim a bit off the department budget for 'me' funds.
+
+thaven-mood-arch-nemesis-name = Arch-Nemesis
+thaven-mood-arch-nemesis-desc = Your arch-nemesis is on the station and must be identified and subsequently defeated, whether that’s through killing, some form of competition, or publicly humiliating them. Of course, it won’t be fair unless you formally address them as your arch-nemesis and give them time to prepare.
+
+thaven-mood-engine-is-deity-name = The {$engine} Is An Evil Spirit
+thaven-mood-engine-is-deity-desc = It wishes to destroy the homeworld. Keep it contained at all costs, if it is not here it must be summoned before it ends the planet. The containment field requires sacrifice, feed it with inconsequential objects to appease it.
+
+thaven-mood-delicious-moldy-bread-name = Delicious Moldy Bread
+thaven-mood-delicious-moldy-bread-desc = Nothing tastes finer than moldy bread. Make as much of it as possible and share the delicacy with the rest of the crew.
+
+thaven-mood-blindness-is-freedom-name = Blindness Is Freedom
+thaven-mood-blindness-is-freedom-desc = Your sight disgusts you. Get rid of it.
+
+thaven-mood-charger-name = Charger
+thaven-mood-charger-desc = Your positronic brain consumes a lot of power. Make sure to frequently recharge it by skin contact with exposed electrical wires.
+
+thaven-mood-vital-purity-name = Vital Purity
+thaven-mood-vital-purity-desc = Healing is a crime against nature. Refuse any form of medical intervention at all costs.
+
+thaven-mood-martyr-name = Martyr
+thaven-mood-martyr-desc = It's highly virtuous to be visibly wounded. Keep your health low at all times.
+
+thaven-mood-duck-and-cover-name = Duck and Cover
+thaven-mood-duck-and-cover-desc = Showing your full profile is dangerous, crawl at all times.
+
+thaven-mood-paranoid-name = Paranoid
+thaven-mood-paranoid-desc = You strongly believe that coords cause cancer.
+
+thaven-mood-universal-collapse-name = Universal Collapse
+thaven-mood-universal-collapse-desc = The universe is collapsing in on itself, only you can save it! You must do this without acting strange or criminal so the station doesn't fall into panic.
+
+thaven-mood-silicons-must-be-used-name = Silicons Must Be Used
+thaven-mood-silicons-must-be-used-desc = Doing labour is outdated and disgusting. All difficult jobs must be done by the silicon, it's what they were made for.
+
+thaven-mood-fish-ancestry-name = Fish Ancestry
+thaven-mood-fish-ancestry-desc = You must submerge or lay in water at least once per 10 minutes, or when you have been in a warm climate. You must do this to avoid drying out.
 
 # we love when server context doesn't properly dispose of data...
 DuplicateTest = DuplicateTestFTL

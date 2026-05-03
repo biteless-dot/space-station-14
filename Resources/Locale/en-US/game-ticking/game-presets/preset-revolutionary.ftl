@@ -55,6 +55,10 @@ central-command-revolution-announcement = Based on our scans from our long-range
 
 soviet-commissariat-revolution-announcement = Long range communications array online. Motherland salutes you comrades, but the battle is not yet over. Your corporation will check if they can reclaim your station one last time, but do not worry! The SSF will arrive shorty. Glory to the USSP!
 
+centcomm-revs-gammarift = Based on long-range sensor scans, we have detected hostile revolutionary activity on-board. Martial law is now in effect. Glory to NanoTrasen.
+
+centcomm-revs-alldead = Long-range sensor scans report all USSP SKB agents on-board are now permanently deceased.
+
 central-command-sender = Central Command
 
 soviet-commissariat-sender = Soviet People's Commissariat
@@ -83,4 +87,9 @@ rev-deconverted-text =
     You are no longer a revolutionary. You now return back as NanoTrasen contractor.
 
     Any further wrongdoings are logged and punishable. So be nice.
+
+rev-deconverted-rule = Reminder: As per Rule 3 of server rules, [bold][color=#a4885c]De-converted Revolutionaries forget what happened while they were brainwashed.[/color][/bold]
+
+rev-deconverted-ruletext = Your character may learn what happened through further investigation and roleplay, but should not be able to remember being a revolutionary nor any actions they commited on behalf of the revolution.
+
 rev-deconverted-confirm = Understood

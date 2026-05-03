@@ -90,6 +90,18 @@ namespace Content.Client.Access.UI
                 JobPresetOptionButton.AddItem(Loc.GetString(job.Name), _jobPrototypeIds.Count - 1);
             }
 
+            SelectAllButton.OnPressed += _ =>
+            {
+                SetAllAccess(true);
+                SubmitData();
+            };
+
+            DeselectAllButton.OnPressed += _ =>
+            {
+                SetAllAccess(false);
+                SubmitData();
+            };
+
             JobPresetOptionButton.OnItemSelected += SelectJobPreset;
             // Starlight-edit: Start
             _accessGroups = new AccessGroupControl();
@@ -117,11 +129,12 @@ namespace Content.Client.Access.UI
             // Starlight-edit: End
         }
 
-        private void ClearAllAccess()
+        private void SetAllAccess(bool enabled)
         {
             _pendingPressedAccessLevels.Clear(); // Starlight-edit
             foreach (var button in _accessButtons.ButtonsList.Values)
-                button.Pressed = false; // Starlight-edit
+                if (!button.Disabled && button.Pressed != enabled)
+                    button.Pressed = enabled;
         }
 
         private void SelectJobPreset(OptionButton.ItemSelectedEventArgs args)
@@ -134,7 +147,7 @@ namespace Content.Client.Access.UI
             JobTitleLineEdit.Text = Loc.GetString(job.Name);
             args.Button.SelectId(args.Id);
 
-            ClearAllAccess();
+            SetAllAccess(false);
 
             // Collect all access levels for this job (direct + all groups)
             // Starlight-edit: Start
@@ -245,16 +258,16 @@ namespace Content.Client.Access.UI
                     if (!_prototypeManager.TryIndex(groupId, out var proto))
                         continue;
 
-                    var groupTags = proto.Tags.Where(tag => 
-                        _prototypeManager.TryIndex<AccessLevelPrototype>(tag, out var accessProto) && 
+                    var groupTags = proto.Tags.Where(tag =>
+                        _prototypeManager.TryIndex<AccessLevelPrototype>(tag, out var accessProto) &&
                         accessProto.CanAddToIdCard).ToList();
-                    
+
                     if (groupTags.Count == 0)
                         continue;
-                        
+
                     var matchingTags = groupTags.Count(tag => allowedAccess.Contains(tag));
                     var threshold = Math.Max(1, Math.Min(3, groupTags.Count / 2));
-                    
+
                     if (matchingTags >= threshold)
                         groupsWithCoverage.Add(groupId);
                 }
@@ -349,16 +362,15 @@ namespace Content.Client.Access.UI
 
         private void SubmitData()
         {
+            // Don't send this if it isn't dirty.
             var jobProtoDirty = _lastJobProto != null &&
                                 _jobPrototypeIds[JobPresetOptionButton.SelectedId] != _lastJobProto;
-            // Starlight-edit: Start
-            // Only submit access levels that are allowed by the server
-            var filteredAccess = _pendingPressedAccessLevels.Where(x => _allowedAccessLevels.Contains(x)).ToList();
 
+            // Starlight-edit: Start
             _owner?.SubmitData(
                 FullNameLineEdit.Text,
                 JobTitleLineEdit.Text,
-                filteredAccess,
+                _pendingPressedAccessLevels.ToList(),
                 jobProtoDirty ? _jobPrototypeIds[JobPresetOptionButton.SelectedId] : string.Empty);
 
             // Clear the override after submit so next UpdateState can update pressed state as normal

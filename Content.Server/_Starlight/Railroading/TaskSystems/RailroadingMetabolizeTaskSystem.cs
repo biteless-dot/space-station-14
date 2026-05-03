@@ -19,13 +19,7 @@ namespace Content.Server._Starlight.Railroading;
 public sealed partial class RailroadingMetabolizeTaskSystem : EntitySystem
 {
     [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly IPlayerManager _players = default!;
-    [Dependency] private readonly IAdminManager _admins = default!;
-    [Dependency] private readonly ISharedAdminLogManager _adminLogger = default!;
-    [Dependency] private readonly EuiManager _euiManager = default!;
-    [Dependency] private readonly AlertsSystem _alerts = default!;
     [Dependency] private readonly RailroadingSystem _railroading = default!;
-    [Dependency] private readonly StarlightEntitySystem _entitySystem = default!;
     public override void Initialize()
     {
         base.Initialize();
@@ -82,6 +76,6 @@ public sealed partial class RailroadingMetabolizeTaskSystem : EntitySystem
         args.IsCompleted = ent.Comp.Reagents.All(x => ent.Comp.MetabolizedReagents.TryGetValue(x.Reagent.Prototype, out var quantity) && quantity >= x.Quantity);
     }
 
-    private void OnConsumeTaskPicked(Entity<RailroadMetabolizeTaskComponent> ent, ref RailroadingCardChosenEvent args) 
+    private void OnConsumeTaskPicked(Entity<RailroadMetabolizeTaskComponent> ent, ref RailroadingCardChosenEvent args)
         => EnsureComp<RailroadMetabolizerWatcherComponent>(args.Subject.Owner);
 }

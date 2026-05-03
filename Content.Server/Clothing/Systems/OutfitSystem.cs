@@ -5,6 +5,7 @@ using Content.Shared.Clothing;
 using Content.Shared.Hands.Components;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Humanoid;
+using Content.Shared.Interaction.Components;
 using Content.Shared.Inventory;
 using Content.Shared.PDA;
 using Content.Shared.Preferences;
@@ -18,14 +19,14 @@ namespace Content.Server.Clothing.Systems;
 
 public sealed class OutfitSystem : EntitySystem
 {
-    [Dependency] private readonly IServerPreferencesManager _preferenceManager = default!;
+    //[Dependency] private readonly IServerPreferencesManager _preferenceManager = default!; // Starlight-removed - we removed the only upstream reference to this
     [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
     [Dependency] private readonly HandsSystem _handSystem = default!;
     [Dependency] private readonly InventorySystem _invSystem = default!;
     [Dependency] private readonly SharedStationSpawningSystem _spawningSystem = default!;
     [Dependency] private readonly SharedHumanoidAppearanceSystem _appearance = default!; //Starlight
 
-    public bool SetOutfit(EntityUid target, string gear, Action<EntityUid, EntityUid>? onEquipped = null)
+    public bool SetOutfit(EntityUid target, string gear, Action<EntityUid, EntityUid>? onEquipped = null, bool unremovable = false)
     {
         if (!EntityManager.TryGetComponent(target, out InventoryComponent? inventoryComponent))
             return false;
@@ -57,6 +58,8 @@ public sealed class OutfitSystem : EntitySystem
                 }
 
                 _invSystem.TryEquip(target, equipmentEntity, slot.Name, silent: true, force: true, inventory: inventoryComponent);
+                if (unremovable)
+                    EnsureComp<UnremoveableComponent>(equipmentEntity);
 
                 onEquipped?.Invoke(target, equipmentEntity);
             }

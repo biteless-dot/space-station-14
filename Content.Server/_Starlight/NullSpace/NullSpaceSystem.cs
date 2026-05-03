@@ -1,8 +1,7 @@
 using Content.Shared.Eye;
 using Robust.Server.GameObjects;
 using Content.Server.Atmos.Components;
-using Content.Server.Temperature.Components;
-using Content.Shared.Movement.Components;
+using Content.Shared.Temperature.Components;
 using Content.Shared.Stealth;
 using Content.Shared.Stealth.Components;
 using System.Linq;
@@ -12,91 +11,164 @@ using Content.Shared._Starlight.NullSpace;
 using Content.Shared.Movement.Pulling.Systems;
 using Content.Shared.Movement.Pulling.Components;
 using Content.Server.Atmos.EntitySystems;
+using Content.Shared.Inventory.VirtualItem;
+using Content.Shared.Hands.Components;
+using Content.Shared.Hands.EntitySystems;
+using Content.Shared.Interaction.Components;
+using Content.Shared.Hands;
+using Content.Server._Starlight.Bluespace;
+using Content.Shared.Shuttles.Components;
+using Content.Shared.Stunnable;
+using Content.Shared.Gravity;
+using Content.Server._Starlight.CosmicCult;
 
 namespace Content.Server._Starlight.NullSpace;
 
-public sealed class EtherealSystem : SharedEtherealSystem
+public sealed partial class NullSpaceSystem : SharedNullSpaceSystem
 {
-    [Dependency] private readonly VisibilitySystem _visibilitySystem = default!;
     [Dependency] private readonly SharedStealthSystem _stealth = default!;
     [Dependency] private readonly EyeSystem _eye = default!;
     [Dependency] private readonly NpcFactionSystem _factions = default!;
     [Dependency] private readonly PullingSystem _pulling = default!;
+    [Dependency] private readonly SharedVirtualItemSystem _virtualItem = default!;
+    [Dependency] private readonly SharedHandsSystem _hands = default!;
+    [Dependency] private readonly NullSpacePhaseSystem _phaseSystem = default!;
+    [Dependency] private readonly SharedGravitySystem _gravity = default!;
+    [Dependency] private readonly CosmicCultRuleSystem _cosmicCult = default!;
+    [Dependency] private readonly VisibilitySystem _visibility = default!;
 
     public override void Initialize()
     {
         base.Initialize();
+        SubscribeLocalEvent<NullSpaceComponent, MapInitEvent>(OnStartup);
+        SubscribeLocalEvent<NullSpaceComponent, ComponentShutdown>(OnShutdown);
+        SubscribeLocalEvent<NullSpaceComponent, ComponentRemove>(OnRemove);
         SubscribeLocalEvent<NullSpaceComponent, AtmosExposedGetAirEvent>(OnExpose);
+        SubscribeLocalEvent<NullSpaceComponent, VirtualItemDeletedEvent>(OnVirtualItemDeleted);
+        SubscribeLocalEvent<NullSpaceComponent, NullSpaceShuntEvent>(NullSpaceShunt);
+        SubscribeLocalEvent<NullSpaceComponent, GetVisMaskEvent>(OnGetVisMask);
     }
 
-    public override void OnStartup(EntityUid uid, NullSpaceComponent component, MapInitEvent args)
+    private void OnGetVisMask(Entity<NullSpaceComponent> uid, ref GetVisMaskEvent args) =>
+        args.VisibilityMask |= (int)VisibilityFlags.NullSpace;
+
+    public void OnStartup(EntityUid uid, NullSpaceComponent component, MapInitEvent args)
     {
-        base.OnStartup(uid, component, args);
-
         var visibility = EnsureComp<VisibilityComponent>(uid);
-        _visibilitySystem.RemoveLayer((uid, visibility), (int)VisibilityFlags.Normal, false);
-        _visibilitySystem.AddLayer((uid, visibility), (int)VisibilityFlags.NullSpace, false);
-        _visibilitySystem.RefreshVisibility(uid, visibility);
+        _visibility.RemoveLayer((uid, visibility), (int)VisibilityFlags.Normal, false);
+        _visibility.AddLayer((uid, visibility), (int)VisibilityFlags.NullSpace, false);
+        _visibility.RefreshVisibility(uid, visibility);
 
-        if (TryComp<EyeComponent>(uid, out var eye))
-            _eye.SetVisibilityMask(uid, eye.VisibilityMask | (int)(VisibilityFlags.NullSpace), eye);
-
-        if (TryComp<TemperatureComponent>(uid, out var temp))
-            temp.AtmosTemperatureTransferEfficiency = 0;
+        _eye.RefreshVisibilityMask(uid);
 
         var stealth = EnsureComp<StealthComponent>(uid);
         _stealth.SetVisibility(uid, 0.8f, stealth);
 
         SuppressFactions(uid, component, true);
 
+        RemComp<KnockedDownComponent>(uid);
+
         EnsureComp<PressureImmunityComponent>(uid);
-        EnsureComp<MovementIgnoreGravityComponent>(uid);
+        EnsureComp<FTLSmashImmuneComponent>(uid);
+        EnsureComp<TemperatureImmunityComponent>(uid);
+
+        if (TryComp<GravityAffectedComponent>(uid, out var grav))
+            _gravity.RefreshWeightless((uid, grav), false);
+
+        if (TryComp<HandsComponent>(uid, out var handsComponent))
+        {
+            foreach (var hand in _hands.EnumerateHands((uid, handsComponent)))
+            {
+                if (_hands.GetHeldItem((uid, handsComponent), hand) is var item)
+                {
+                    if (HasComp<UnremoveableComponent>(item))
+                        continue;
+
+                    if (TryComp<VirtualItemComponent>(item, out var vcomp))
+                        if (HasComp<NullSpacePulledComponent>(vcomp.BlockingEntity) && TryComp<PullableComponent>(vcomp.BlockingEntity, out var pulling) && pulling.BeingPulled)
+                        {
+                            RemComp<NullSpacePulledComponent>(vcomp.BlockingEntity);
+                            // safety check just to make sure you dont pull something out of nullspace by phasing in
+                            if (!HasComp<NullSpaceComponent>(vcomp.BlockingEntity)) _phaseSystem.Phase(vcomp.BlockingEntity);
+                            continue;
+                        }
+
+                    _hands.DoDrop((uid, handsComponent), hand, true);
+                }
+
+                if (_virtualItem.TrySpawnVirtualItemInHand(uid, uid, out var virtItem))
+                    EnsureComp<UnremoveableComponent>(virtItem.Value);
+            }
+        }
 
         if (TryComp<PullableComponent>(uid, out var pullable) && pullable.BeingPulled)
         {
-            _pulling.TryStopPull(uid, pullable);
-        }
-
-        if (TryComp<PullerComponent>(uid, out var pullerComp)
-            && TryComp<PullableComponent>(pullerComp.Pulling, out var subjectPulling))
-        {
-            _pulling.TryStopPull(pullerComp.Pulling.Value, subjectPulling);
+            // if thing pulling is in nullspace, you're coming along with them.
+            if (!HasComp<NullSpaceComponent>(pullable.Puller!.Value))
+                _pulling.TryStopPull(uid, pullable);
         }
     }
 
-    public override void OnShutdown(EntityUid uid, NullSpaceComponent component, ComponentShutdown args)
+    public void OnShutdown(EntityUid uid, NullSpaceComponent component, ComponentShutdown args)
     {
-        base.OnShutdown(uid, component, args);
-
         if (TryComp<VisibilityComponent>(uid, out var visibility))
         {
-            _visibilitySystem.AddLayer((uid, visibility), (int)VisibilityFlags.Normal, false);
-            _visibilitySystem.RemoveLayer((uid, visibility), (int)VisibilityFlags.NullSpace, false);
-            _visibilitySystem.RefreshVisibility(uid, visibility);
+            _visibility.RemoveLayer((uid, visibility), (int)VisibilityFlags.NullSpace, false);
+            _visibility.AddLayer((uid, visibility), (int)VisibilityFlags.Normal, false);
+            _visibility.RefreshVisibility(uid, visibility);
         }
-
-        if (TryComp<EyeComponent>(uid, out var eye))
-            _eye.SetVisibilityMask(uid, (int)VisibilityFlags.Normal, eye);
-
-        if (TryComp<TemperatureComponent>(uid, out var temp))
-            temp.AtmosTemperatureTransferEfficiency = 0.1f;
 
         SuppressFactions(uid, component, false);
 
         RemComp<StealthComponent>(uid);
         RemComp<PressureImmunityComponent>(uid);
-        RemComp<MovementIgnoreGravityComponent>(uid);
+        RemComp<FTLSmashImmuneComponent>(uid);
 
-        if (TryComp<PullableComponent>(uid, out var pullable) && pullable.BeingPulled)
-        {
-            _pulling.TryStopPull(uid, pullable);
-        }
+        if (_cosmicCult.AssociatedGamerule(uid) is not { } cult || cult.Comp.CurrentTier != 3)
+            EnsureComp<TemperatureImmunityComponent>(uid);
 
-        if (TryComp<PullerComponent>(uid, out var pullerComp)
-            && TryComp<PullableComponent>(pullerComp.Pulling, out var subjectPulling))
+        _virtualItem.DeleteInHandsMatching(uid, uid);
+    }
+
+    public void OnRemove(EntityUid uid, NullSpaceComponent component, ComponentRemove args)
+    {
+        _eye.RefreshVisibilityMask(uid);
+
+        if (TryComp<GravityAffectedComponent>(uid, out var grav))
+            _gravity.RefreshWeightless((uid, grav));
+    }
+
+    private void OnVirtualItemDeleted(EntityUid uid, NullSpaceComponent component, VirtualItemDeletedEvent args)
+    {
+        if (TryComp<HandsComponent>(uid, out var handsComponent))
         {
-            _pulling.TryStopPull(pullerComp.Pulling.Value, subjectPulling);
+            foreach (var hand in _hands.EnumerateHands((uid, handsComponent)))
+            {
+                if (_hands.GetHeldItem((uid, handsComponent), hand) is var item)
+                {
+                    if (HasComp<UnremoveableComponent>(item))
+                        continue;
+
+                    if (TryComp<VirtualItemComponent>(item, out var vcomp))
+                    {
+                        // safety check just to make sure you dont pull something into nullspace by phasing out.
+                        if (HasComp<NullSpaceComponent>(vcomp.BlockingEntity)) _phaseSystem.Phase(vcomp.BlockingEntity);
+                        continue;
+                    }
+
+                    _hands.DoDrop((uid, handsComponent), hand, true);
+                }
+
+                if (_virtualItem.TrySpawnVirtualItemInHand(uid, uid, out var virtItem))
+                    EnsureComp<UnremoveableComponent>(virtItem.Value);
+            }
         }
+    }
+
+    private void NullSpaceShunt(EntityUid uid, NullSpaceComponent component, NullSpaceShuntEvent args)
+    {
+        SpawnAtPosition(_shadekinShadow, Transform(uid).Coordinates);
+        RemComp(uid, component);
     }
 
     public void SuppressFactions(EntityUid uid, NullSpaceComponent component, bool set)

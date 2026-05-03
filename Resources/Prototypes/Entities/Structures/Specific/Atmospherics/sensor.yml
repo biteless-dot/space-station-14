@@ -25,10 +25,19 @@
       Ammonia: stationAmmonia
       NitrousOxide: stationNO
       Frezon: danger
-  - type: Tag
-    tags:
-      - AirSensor
-      - ForceFixRotations
+      # Funkystation Start: Funky atmos - /tg/ gases
+      BZ: stationBZ
+      Healium: stationHealium
+      Nitrium: danger
+      Pluoxium: stationPluoxium
+      Hydrogen: danger
+      HyperNoblium: stationHyperNoblium
+      ProtoNitrate: danger
+      Zauker: danger
+      Halon: danger
+      Helium: stationHelium
+      AntiNoblium: danger
+      # Funkystation End: Funky atmos - /tg/ gases
   - type: GuideHelp
     guides:
     - DeviceMonitoringAndControl
@@ -90,6 +99,17 @@
         enum.PowerDeviceVisualLayers.Powered:
           True: { state: gsensor1 }
           False: { state: gsensor0 }
+  - type: Tag
+    tags:
+    - AirSensor
+    - ForceFixRotations
+  # Starlight Start: RPD
+  - type: RCDDeconstructable
+    cost: 2
+    delay: 2
+    fx: EffectRCDDeconstruct2
+    rpd: true
+  # Starlight End: RPD
 
 - type: entity
   parent: BaseItem

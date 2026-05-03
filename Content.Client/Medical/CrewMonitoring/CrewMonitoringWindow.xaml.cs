@@ -69,18 +69,38 @@ public sealed partial class CrewMonitoringWindow : FancyWindow
             TryToScrollToFocus();
     }
 
-    public void ShowSensors(List<SuitSensorStatus> sensors, EntityUid monitor, EntityCoordinates? monitorCoords)
+    public void ShowSensors(bool awaitingData, bool serverOnline, List<SuitSensorStatus> sensors, EntityUid monitor, EntityCoordinates? monitorCoords) // Starlight: Add first two params
     {
         ClearOutDatedData();
 
+        // Starlight BEGIN
+        NoServerLabel.Visible = false;
+        NoEligibleSensorsLabel.Visible = false;
+
+        // Show monitor on nav map, always.
+        if (monitorCoords != null && _blipTexture != null)
+        {
+            NavMap.TrackedEntities[_entManager.GetNetEntity(monitor)] = new NavMapBlip(monitorCoords.Value, _blipTexture, Color.Cyan, true, false);
+        }
+
+        // Don't show outdated data.
+        if (awaitingData)
+            return;
+
         // No server label
-        if (sensors.Count == 0)
+        if (!serverOnline)
         {
             NoServerLabel.Visible = true;
             return;
         }
 
-        NoServerLabel.Visible = false;
+        // No eligible sensors label
+        if (sensors.Count == 0)
+        {
+            NoEligibleSensorsLabel.Visible = true;
+            return;
+        }
+        // Starlight END
 
         // Collect one status per user, using the sensor with the most data available.
         Dictionary<NetEntity, SuitSensorStatus> uniqueSensorsMap = new();
@@ -133,7 +153,7 @@ public sealed partial class CrewMonitoringWindow : FancyWindow
             };
 
             deparmentLabel.SetMessage(department);
-            deparmentLabel.StyleClasses.Add(StyleNano.StyleClassTooltipActionDescription);
+            deparmentLabel.StyleClasses.Add("font-large");
 
             SensorsTable.AddChild(deparmentLabel);
 
@@ -158,19 +178,22 @@ public sealed partial class CrewMonitoringWindow : FancyWindow
                 HorizontalExpand = true,
             };
 
-            deparmentLabel.SetMessage(Loc.GetString("crew-monitoring-user-interface-no-department"));
-            deparmentLabel.StyleClasses.Add(StyleNano.StyleClassTooltipActionDescription);
+            deparmentLabel.SetMessage(Loc.GetString("crew-monitoring-ui-no-department-label"));
 
             SensorsTable.AddChild(deparmentLabel);
 
             PopulateDepartmentList(remainingSensors);
         }
 
+        // Starlight BEGIN: Moved to top of function
+        /*
         // Show monitor on nav map
         if (monitorCoords != null && _blipTexture != null)
         {
             NavMap.TrackedEntities[_entManager.GetNetEntity(monitor)] = new NavMapBlip(monitorCoords.Value, _blipTexture, Color.Cyan, true, false);
         }
+        */
+        // Starlight END
     }
 
     private void PopulateDepartmentList(IEnumerable<SuitSensorStatus> departmentSensors)
@@ -197,7 +220,7 @@ public sealed partial class CrewMonitoringWindow : FancyWindow
             };
 
             if (sensor.SuitSensorUid == _trackedEntity)
-                sensorButton.AddStyleClass(StyleNano.StyleClassButtonColorGreen);
+                sensorButton.AddStyleClass(StyleClass.Positive);
 
             SensorsTable.AddChild(sensorButton);
 
@@ -385,10 +408,10 @@ public sealed partial class CrewMonitoringWindow : FancyWindow
             var castSensor = (CrewMonitoringButton) sensor;
 
             if (castSensor.SuitSensorUid == prevTrackedEntity)
-                castSensor.RemoveStyleClass(StyleNano.StyleClassButtonColorGreen);
+                castSensor.RemoveStyleClass(StyleClass.Positive);
 
             else if (castSensor.SuitSensorUid == currTrackedEntity)
-                castSensor.AddStyleClass(StyleNano.StyleClassButtonColorGreen);
+                castSensor.AddStyleClass(StyleClass.Positive);
 
             if (castSensor?.Coordinates == null)
                 continue;

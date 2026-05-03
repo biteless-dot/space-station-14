@@ -54,11 +54,17 @@
     instrumentList:
       "Aah": {52: 0}
       "Ooh": {53: 0}
-      "Kweh": {4: 1}
+      "Kweh": {4: 100} # Defined in space-station-14.sf2
+      "Waa": {5: 100} # Defined in space-station-14.sf2
+      "Wah": {6: 100} # Defined in space-station-14.sf2
   - type: Sprite
     sprite: Objects/Fun/Instruments/microphone.rsi
   - type: Item
     size: Small
+    storedSprite:
+      state: storage
+      sprite: Objects/Fun/Instruments/microphone.rsi
+
 
 - type: entity
   parent: BasePercussionInstrument
@@ -81,7 +87,7 @@
     program: 119
   - type: Sprite
     sprite: Objects/Fun/Instruments/reversecymbal.rsi
-    
+
 - type: entity
   parent: BaseHandheldInstrument
   id: SuperSynthesizerInstrument
@@ -105,7 +111,7 @@
     size: Normal
     sprite: Objects/Fun/Instruments/h_synthesizer.rsi
   - type: ActivatableUI
-    inHandsOnly: false 
+    inHandsOnly: false
 
 - type: entity
   parent: SuperSynthesizerInstrument

@@ -35,7 +35,13 @@
     priority: 1
   - type: TargetAction
   - type: EntityTargetAction
+    blacklist: # FH
+      tags:
+      - IPC
+      components:
+      - Absorbed
     event: !type:ChangelingDevourActionEvent
+  - type: EorgPreventAction
 
 - type: entity
   id: ActionChangelingTransform
@@ -46,3 +52,9 @@
     icon: { sprite : Interface/Actions/changeling.rsi, state: "transform" }
   - type: InstantAction
     event: !type:ChangelingTransformActionEvent
+
+- type: entity
+  parent: ActionIntrinsicStore
+  id: ActionChangelingStore
+  name: DNA Store
+  description: Opens the ability store.

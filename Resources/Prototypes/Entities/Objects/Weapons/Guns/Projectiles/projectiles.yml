@@ -63,14 +63,14 @@
       shader: unshaded
   - type: Physics
     bodyType: Dynamic
-    linearDamping: 0
-    angularDamping: 0
+  - type: TileFrictionModifier
+    modifier: 0
   - type: Fixtures
     fixtures:
       projectile:
         shape:
           !type:PhysShapeAabb
-          bounds: "-0.1,-0.1,0.1,0.1"
+          bounds: "-0.1,-0.10,0.1,0.30"
         hard: false
         mask:
         - Impassable
@@ -142,7 +142,8 @@
   - type: Projectile
     damage:
       types:
-        Blunt: 14
+        Piercing: 10
+        Heat: 4
   - type: PointLight
     enabled: true
     color: "#ff4300"
@@ -177,6 +178,11 @@
     sprite: Objects/Weapons/Guns/Projectiles/projectiles2.rsi
     layers:
     - state: uranium
+      shader: unshaded
+ # - type: PointLight // Too resource intensive for what little effect it has, one day...
+ #   enabled: true
+ #   color: "#059919"
+ #   radius: 2.0
   - type: Projectile
     damage:
       types:
@@ -210,6 +216,7 @@
           bounds: "-0.15,-0.45,0.15,0.15"
         hard: false
         mask:
+        - Opaque
         - Impassable
         - BulletImpassable
       fly-by: *flybyfixture
@@ -217,7 +224,7 @@
   - type: Projectile
     damage:
       types:
-        Shock: 1
+        Shock: 0
     soundHit:
       path: "/Audio/Weapons/Guns/Hits/taser_hit.ogg"
     forceSound: true
@@ -225,10 +232,15 @@
     lifetime: 0.170 # Very short range
   - type: StunOnCollide
     stunAmount: 0
-    knockdownAmount: 2.5 # Enough to subdue and follow up with a stun batong
+    knockdownAmount: 2.5 # Enough to subdue and follow up with a stun baton
+    drop: false #Ranged KD and item drop are too strong in one package
     slowdownAmount: 2.5
     walkSpeedModifier: 0.5
     sprintSpeedModifier: 0.5
+  # Starlight start
+  - type: CyberneticDisruptionOnCollide
+    disableChance: 0.2
+  # Starlight end
 
 - type: entity
   name: taser bolt
@@ -253,10 +265,15 @@
     lifetime: 1.0 # Not so short range
   - type: StunOnCollide
     stunAmount: 5
+    drop: true # this is the evil taser
     knockdownAmount: 10
     slowdownAmount: 10
     walkSpeedModifier: 0.5
     sprintSpeedModifier: 0.5
+  # Starlight start
+  - type: CyberneticDisruptionOnCollide
+    disableChance: 0.2
+  # Starlight end
 
 - type: entity
   name : disabler bolt
@@ -286,6 +303,7 @@
           bounds: "-0.15,-0.3,0.15,0.3"
         hard: false
         mask:
+        - Opaque
         - Impassable
         - BulletImpassable
       fly-by: *flybyfixture
@@ -300,6 +318,10 @@
     soundHit:
       collection: WeakHit
     forceSound: true
+  # Starlight start
+  - type: CyberneticDisruptionOnCollide
+    disableChance: 0.1
+  # Starlight end
 
 - type: entity
   name : disabler bolt practice
@@ -326,6 +348,7 @@
           bounds: "-0.15,-0.3,0.15,0.3"
         hard: false
         mask:
+        - Opaque
         - Impassable
         - BulletImpassable
       fly-by: *flybyfixture
@@ -380,6 +403,10 @@
   - type: Reflective
     reflective:
     - Energy
+  # Starlight start
+  - type: CyberneticDisruptionOnCollide
+    duration: 5
+  # Starlight end
 
 - type: entity
   name: watcher bolt
@@ -398,7 +425,7 @@
     - state: omnilaser
       shader: unshaded
   - type: Ammo
-    muzzleFlash: null
+    muzzleFlash: MuzzleFlashEffectOmnilaser
   - type: Physics
   - type: Fixtures
     fixtures:
@@ -409,6 +436,8 @@
         hard: false
         mask:
         - Opaque
+        - Impassable
+        - BulletImpassable
       fly-by: *flybyfixture
   - type: Projectile
     #   soundHit:  Waiting on serv3
@@ -427,6 +456,9 @@
   parent: WatcherBolt
   categories: [ HideSpawnMenu ]
   components:
+  - type: Reflective
+    reflective:
+    - Energy
   - type: Projectile
     #   soundHit:  Waiting on serv3
     impactEffect: BulletImpactEffectDisabler
@@ -441,7 +473,7 @@
 - type: entity
   name: magmawing watcher bolt
   id: WatcherBoltMagmawing
-  parent: BaseBullet
+  parent: WatcherBolt
   categories: [ HideSpawnMenu ]
   components:
   - type: Sprite
@@ -450,6 +482,8 @@
     - state: omnilaser_greyscale
       shader: unshaded
       color: orangered
+  - type: Ammo
+    muzzleFlash: MuzzleFlashEffectHeavyLaser
   - type: Projectile
     #   soundHit:  Waiting on serv3
     impactEffect: BulletImpactEffectOrangeDisabler
@@ -465,6 +499,9 @@
   parent: WatcherBoltMagmawing
   categories: [ HideSpawnMenu ]
   components:
+  - type: Reflective
+    reflective:
+    - Energy
   - type: Projectile
     #   soundHit:  Waiting on serv3
     impactEffect: BulletImpactEffectOrangeDisabler
@@ -793,6 +830,12 @@
     radius: 3.5
     color: orange
     energy: 0.5
+  - type: RadarBlip # Starlight
+    color: "#44FFAA"
+    scale: 1
+    shape: Circle
+    requireInSpace: true
+  - type: PDTarget # Starlight
 
 - type: entity
   id: BulletWeakRocket
@@ -815,6 +858,34 @@
     radius: 3.5
     color: orange
     energy: 0.5
+
+- type: entity
+  id: Bullet60mmRocket
+  name: 60mm rocket
+  parent: BaseBulletTrigger
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Sprite
+    sprite: Objects/Weapons/Guns/Projectiles/projectiles2.rsi
+    layers:
+      - state: frag
+  - type: ExplodeOnTrigger
+  - type: Explosive
+    explosionType: Default
+    maxIntensity: 20
+    intensitySlope: 3
+    totalIntensity: 100
+    maxTileBreak: 1
+  - type: PointLight
+    radius: 3.5
+    color: orange
+    energy: 0.5
+  - type: RadarBlip # Starlight
+    color: "#44FFAA"
+    scale: 1
+    shape: Circle
+    requireInSpace: true
+  - type: PDTarget # Starlight
 
 - type: entity
   id: BulletGrenadeBaton
@@ -853,6 +924,12 @@
     intensitySlope: 5
     maxIntensity: 10
     canCreateVacuum: false
+  - type: RadarBlip # Starlight
+    color: "#FFDD00"
+    scale: 1
+    shape: Square
+    requireInSpace: true
+  - type: PDTarget # Starlight
 
 - type: entity
   id: BulletGrenadeFlash
@@ -894,6 +971,12 @@
     triggerKey: trigger
     fillPrototype: PelletClusterLessLethal
     capacity: 30
+  - type: RadarBlip # Starlight
+    color: "#FFDD00"
+    scale: 1
+    shape: Square
+    requireInSpace: true
+  - type: PDTarget # Starlight
 
 - type: entity
   parent: BaseBulletTrigger
@@ -906,8 +989,8 @@
     layers:
     - state: cleanade
   - type: SmokeOnTrigger
-    duration: 3.5
-    spreadAmount: 30
+    duration: 6
+    spreadAmount: 45
     smokePrototype: Foam
     solution:
       reagents:
@@ -916,13 +999,17 @@
   - type: EmitSoundOnTrigger
     sound: /Audio/Items/smoke_grenade_smoke.ogg
     positional: true
-  - type: ExplodeOnTrigger
-  - type: Explosive
-    explosionType: Default
-    totalIntensity: 0.01 # a little pop
-    intensitySlope: 1
-    maxIntensity: 0.01
-    tileBreakScale: 0.01
+  - type: Projectile # Starlight start
+    damage:
+      types:
+        Blunt: 0 # Cleanades shouldn't do damage
+  # - type: ExplodeOnTrigger
+  # - type: Explosive
+  #   explosionType: Default
+  #   totalIntensity: 0.01 # a little pop
+  #   intensitySlope: 1
+  #   maxIntensity: 0.01
+  #   tileBreakScale: 0.01 # Starlight end
 
 - type: entity
   id: BulletGrenadeEMP
@@ -944,6 +1031,12 @@
     radius: 3.5
     color: blue
     energy: 0.5
+  - type: RadarBlip # Starlight
+    color: "#44FFAA"
+    scale: 1
+    shape: Circle
+    requireInSpace: true
+  - type: PDTarget # Starlight
 
 - type: entity
   id: BulletCap
@@ -986,8 +1079,8 @@
   - type: Clickable
   - type: Physics
     bodyType: Dynamic
-    linearDamping: 0
-    angularDamping: 0
+  - type: TileFrictionModifier
+    modifier: 0
   - type: TimedDespawn
     lifetime: 10
   - type: Projectile
@@ -1070,8 +1163,8 @@
         - state: hook
     - type: Physics
       bodyType: Dynamic
-      linearDamping: 0
-      angularDamping: 0
+    - type: TileFrictionModifier
+      modifier: 0
     - type: Projectile
       deleteOnCollide: false
       damage:
@@ -1088,6 +1181,17 @@
             - Impassable
             - HighImpassable
     - type: GrapplingProjectile
+
+- type: entity
+  parent: GrapplingHook
+  id: StickyHandPalm
+  name: sticky hand palm
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Sprite
+    sprite: Objects/Weapons/Guns/Launchers/sticky_hand.rsi
+  - type: Ammo
+    muzzleFlash: null
 
 - type: entity
   name : disabler bolt smg
@@ -1117,6 +1221,7 @@
           bounds: "-0.15,-0.3,0.15,0.3"
         hard: false
         mask:
+        - Opaque
         - Impassable
         - BulletImpassable
       fly-by: *flybyfixture
@@ -1131,6 +1236,10 @@
     soundHit:
       collection: WeakHit
     forceSound: true
+  # Starlight start
+  - type: CyberneticDisruptionOnCollide
+    disableChance: 0.1
+  # Starlight end
 
 - type: entity
   name : energy bolt
@@ -1206,6 +1315,9 @@
     soundHit:
       collection: WeakHit
     forceSound: true
+  # Starlight start
+  - type: CyberneticDisruptionOnCollide
+  # Starlight end
 
 - type: entity
   name: tesla gun lightning
@@ -1268,6 +1380,7 @@
           bounds: "-0.15,-0.3,0.15,0.3"
         hard: false
         mask:
+        - Opaque
         - Impassable
         - BulletImpassable
       fly-by: *flybyfixture
@@ -1277,7 +1390,7 @@
     damage:
       types:
         Heat: 20
-        
+
 - type: entity
   name: destroying bolt
   id: BulletLaserDestroy
@@ -1325,7 +1438,7 @@
     spread: 30
 
 - type: entity
-  name: narrow laser barrage
+  name: lethal laser barrage
   id: BulletLaserSpreadNarrow
   categories: [ HideSpawnMenu ]
   parent: BulletLaser
@@ -1345,3 +1458,93 @@
     proto: BulletDisablerSmg
     count: 3 #bit stronger than a disabler if you hit your shots you goober, still not a 2 hit stun though
     spread: 9
+
+- type: entity
+  name: magnum laser bolt
+  id: BulletLaserMagnum
+  categories: [ HideSpawnMenu ]
+  parent: BulletLaser
+  components:
+  - type: Sprite
+    sprite: Objects/Weapons/Guns/Projectiles/projectiles_magnum.rsi
+    layers:
+    - state: magnum
+      shader: unshaded
+  - type: PointLight
+    enabled: true
+    color: "#ff4300"
+  - type: Projectile
+    impactEffect: BulletImpactEffectOrangeDisabler
+    damage:
+      types:
+        Heat: 30
+
+- type: entity
+  name: magnum window-piercing bolt
+  id: BulletLaserWindowPiercingMagnum
+  categories: [ HideSpawnMenu ]
+  parent: BulletLaser
+  components:
+  - type: Sprite
+    sprite: Objects/Weapons/Guns/Projectiles/projectiles_magnum.rsi
+    layers:
+    - state: magnum_piercing
+      shader: unshaded
+  - type: PointLight
+    enabled: true
+    color: "#ff4300"
+  - type: Projectile
+    impactEffect: BulletImpactEffectOrangeDisabler
+    damage:
+      types:
+        Heat: 20
+  - type: Fixtures
+    fixtures:
+      projectile:
+        shape:
+          !type:PhysShapeAabb
+          bounds: "-0.1,-0.1,0.1,0.1"
+        hard: false
+        mask:
+        - Opaque
+
+- type: entity
+  parent: BaseBullet
+  id: EnergyCrossbowBolt
+  categories: [ HideSpawnMenu ]
+  name: energy bolt
+  description: This'll hurt.
+  components:
+  - type: Reflective
+    reflective:
+    - NonEnergy
+  - type: Ammo
+    muzzleFlash: null
+  - type: Sprite
+    sprite: Objects/Weapons/Guns/Projectiles/projectiles2.rsi
+    layers:
+    - state: crossbowbolt
+      shader: unshaded
+  - type: Projectile
+    damage:
+      types:
+        Piercing: 2
+  - type: StunOnCollide #somewhat mirror to taser stats, meant to be tot 'sidegrade'
+    stunAmount: 0
+    knockdownAmount: 2.5
+    slowdownAmount: 2.5
+    walkSpeedModifier: 0.2
+    sprintSpeedModifier: 0.2
+    drop: false
+  - type: StaminaDamageOnCollide #additional stam damage to make repeated pushups less of a viable counter
+    damage: 45
+  - type: SolutionContainerManager
+    solutions:
+      bolt:
+        maxVol: 4 # Starlight-edit: 1.5 -> 4
+        reagents:
+        - ReagentId: Impedrezene # SL edit
+          Quantity: 4
+  - type: SolutionInjectOnProjectileHit
+    transferAmount: 4 # Starlight-edit: 1.5 -> 4
+    solution: bolt

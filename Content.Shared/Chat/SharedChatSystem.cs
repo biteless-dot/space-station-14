@@ -1,17 +1,35 @@
 using System.Collections.Frozen;
-using Content.Shared.CollectiveMind;
 using System.Text.RegularExpressions;
+using Content.Shared.ActionBlocker;
+using Content.Shared.Chat.Prototypes;
 using Content.Shared.Popups;
 using Content.Shared.Radio;
 using Content.Shared.Speech;
+using Content.Shared.Whitelist;
 using Robust.Shared.Audio;
+using Robust.Shared.Audio.Systems;
+using Robust.Shared.Console;
+using Robust.Shared.Network;
+using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Random;
 using Robust.Shared.Utility;
-using Robust.Shared.Serialization; // Starlight
+
+#region Starlight
+using System.Linq;
+using System.Diagnostics.CodeAnalysis;
+using Content.Shared._Starlight.Radio;
+using Content.Shared.Radio.Components;
+using Content.Shared._Starlight.Language;
+using Content.Shared._Starlight.Language.Systems;
+using Content.Shared.CollectiveMind;
+using Robust.Shared.Serialization;
+using Content.Shared._Starlight.Speech;
+#endregion Starlight
 
 namespace Content.Shared.Chat;
 
-public abstract class SharedChatSystem : EntitySystem
+public abstract partial class SharedChatSystem : EntitySystem
 {
     public const char RadioCommonPrefix = ';';
     public const char RadioChannelPrefix = ':';
@@ -44,30 +62,47 @@ public abstract class SharedChatSystem : EntitySystem
 
     [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
     [Dependency] private readonly SharedPopupSystem _popup = default!;
+    [Dependency] private readonly EntityWhitelistSystem _whitelist = default!;
+    [Dependency] private readonly ActionBlockerSystem _actionBlocker = default!;
+    [Dependency] private readonly SharedAudioSystem _audio = default!;
+    [Dependency] private readonly IRobustRandom _random = default!;
+    [Dependency] private readonly INetManager _net = default!;
+
+#region Starlight
+    [Dependency] private readonly SharedLanguageSystem _language = default!;
+    [Dependency] private readonly SpeechSystem _speechSystem = default!;
+#endregion Starlight
 
     /// <summary>
     /// Cache of the keycodes for faster lookup.
     /// </summary>
     private FrozenDictionary<char, RadioChannelPrototype> _keyCodes = default!;
-    
+
     private FrozenDictionary<char, CollectiveMindPrototype> _mindKeyCodes = default!;
 
     public override void Initialize()
     {
         base.Initialize();
+
         DebugTools.Assert(_prototypeManager.HasIndex(CommonChannel));
+
         SubscribeLocalEvent<PrototypesReloadedEventArgs>(OnPrototypeReload);
         CacheRadios();
-        CacheCollectiveMinds();
+        CacheEmotes();
+
+        CacheCollectiveMinds(); // Starlight
     }
 
     protected virtual void OnPrototypeReload(PrototypesReloadedEventArgs obj)
     {
         if (obj.WasModified<RadioChannelPrototype>())
             CacheRadios();
-        
-        if (obj.WasModified<CollectiveMindPrototype>())
-            CacheCollectiveMinds();
+
+        if (obj.WasModified<EmotePrototype>())
+            CacheEmotes();
+
+        if (obj.WasModified<CollectiveMindPrototype>()) // Starlight
+            CacheCollectiveMinds(); // Starlight
     }
 
     private void CacheRadios()
@@ -75,7 +110,7 @@ public abstract class SharedChatSystem : EntitySystem
         _keyCodes = _prototypeManager.EnumeratePrototypes<RadioChannelPrototype>()
             .ToFrozenDictionary(x => x.KeyCode);
     }
-    
+
     private void CacheCollectiveMinds()
     {
         _prototypeManager.PrototypesReloaded -= OnPrototypeReload;
@@ -146,15 +181,17 @@ public abstract class SharedChatSystem : EntitySystem
     /// <param name="channel">The channel that was requested, if any</param>
     /// <param name="quiet">Whether or not to generate an informative pop-up message.</param>
     /// <returns></returns>
-    public bool TryProccessRadioMessage(
+    public bool TryProcessRadioMessage(
         EntityUid source,
         string input,
         out string output,
         out RadioChannelPrototype? channel,
+        out CustomRadioChannelData? customChannel, //Starlight
         bool quiet = false)
     {
         output = input.Trim();
         channel = null;
+        customChannel = null; //Starlight
 
         if (input.Length == 0)
             return false;
@@ -186,20 +223,143 @@ public abstract class SharedChatSystem : EntitySystem
             var ev = new GetDefaultRadioChannelEvent();
             RaiseLocalEvent(source, ev);
 
+            //Starlight begin
             if (ev.Channel != null)
-                _prototypeManager.TryIndex(ev.Channel, out channel);
+                if (!_prototypeManager.TryIndex(ev.Channel, out channel))
+                {
+                    TryGetCustomChannel(source, ev.Channel, out customChannel);
+                }
+            //Starlight end
             return true;
         }
 
-        if (!_keyCodes.TryGetValue(channelKey, out channel) && !quiet)
+        // Starlight begin
+        var protoResult = TryGetChannelsFromKeyCode(source, channelKey, out var channelMatches);
+        var customResult = TryGetCustomChannelsFromKeyCode(source, channelKey, out var customChannelMatches);
+        RadioChannelPrototype? protoMatch = null;
+        foreach (var match in channelMatches.Where(p => p.KeyCode == channelKey))
+            protoMatch = match;
+        if (protoResult && !customResult)
         {
-            var msg = Loc.GetString("chat-manager-no-such-channel", ("key", channelKey));
-            _popup.PopupEntity(msg, source, source);
+            if (protoMatch is not null)
+            {
+                channel = protoMatch;
+                return true;
+            }
         }
 
+        if (customResult && !protoResult)
+        {
+            if (customChannelMatches.Count == 1 || input.Length < 3)
+            {
+                customChannel = customChannelMatches.First();
+                return true;
+            }
+            var idx = input[2].ToString();
+            var isNum = int.TryParse(idx, out var num);
+            if (!isNum || num == 0 || !customChannelMatches.TryGetValue(num, out var match))
+            {
+                customChannel = customChannelMatches[0];
+                return true;
+            }
+
+            output = SanitizeMessageCapital(input[3..].TrimStart());
+            customChannel = match;
+            return true;
+        }
+
+        if (customResult && protoResult)
+        {
+            if (input.Length < 3 && protoMatch is not null)
+            {
+                channel = protoMatch;
+                return true;
+            }
+            var idx = input[2].ToString();
+            var isNum = int.TryParse(idx, out var num);
+            if (!isNum)
+            {
+                channel = protoMatch;
+                return true;
+            }
+            num--;
+            if (!customChannelMatches.TryGetValue(num, out var match))
+            {
+                channel = protoMatch;
+                return true;
+            }
+            output = SanitizeMessageCapital(input[3..].TrimStart());
+            customChannel = match;
+            return true;
+        }
+        if(_net.IsServer) _popup.PopupEntity(Loc.GetString("chat-manager-no-such-channel", ("key", channelKey)), source, source);
         return true;
+        //Starlight end
     }
-    
+
+    //Starlight begin
+    public bool TryGetCustomChannel(EntityUid source, string channelId, [NotNullWhen(true)] out CustomRadioChannelData? customChannel)
+    {
+        customChannel = null;
+        if (TryComp<WearingHeadsetComponent>(source, out var wearingHeadset))
+            if (TryComp<ActiveRadioComponent>(wearingHeadset.Headset, out var headsetRadio))
+                foreach (var channel in headsetRadio.CustomChannels.Where(channel => channel.Id == channelId))
+                {
+                    customChannel = channel;
+                    return true;
+                }
+        if(TryComp<IntercomComponent>(source, out var intercom))
+        {
+            foreach (var channel in intercom.CustomChannels.Where(channel => channel.Id == channelId))
+            {
+                customChannel = channel;
+                return true;
+            }
+        }
+
+        if (!TryComp<IntrinsicRadioTransmitterComponent>(source, out var radio)) return false;
+        foreach (var channel in radio.CustomChannels.Where(channel => channel.Id == channelId))
+        {
+            customChannel = channel;
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool TryGetCustomChannelsFromKeyCode(EntityUid source, char keycode,
+        out List<CustomRadioChannelData> customChannels)
+    {
+        customChannels = [];
+        if (TryComp<WearingHeadsetComponent>(source, out var wearingHeadset))
+            if (TryComp<ActiveRadioComponent>(wearingHeadset.Headset, out var headsetRadio))
+                customChannels.AddRange(headsetRadio.CustomChannels.Where(channel => channel.Keycode == keycode));
+
+        if (TryComp<IntrinsicRadioTransmitterComponent>(source, out var radio))
+            customChannels.AddRange(radio.CustomChannels.Where(channel => channel.Keycode == keycode));
+        return customChannels.Count > 0;
+    }
+
+    private bool TryGetChannelsFromKeyCode(EntityUid source, char keycode,
+        out List<RadioChannelPrototype> presentChannels)
+    {
+        presentChannels = [];
+        if (TryComp<WearingHeadsetComponent>(source, out var wearingHeadset))
+            if (TryComp<ActiveRadioComponent>(wearingHeadset.Headset, out var headsetRadio))
+                presentChannels.AddRange(headsetRadio.Channels
+                    .Where(channel => _prototypeManager.HasIndex(channel))
+                    .Select(proto => _prototypeManager.Index(proto))
+                    .Where(channel => channel.KeyCode == keycode));
+
+        if (TryComp<IntrinsicRadioTransmitterComponent>(source, out var radio))
+            presentChannels.AddRange(radio.Channels
+                .Where(channel => _prototypeManager.HasIndex(channel))
+                .Select(proto => _prototypeManager.Index(proto))
+                .Where(channel => channel.KeyCode == keycode));
+        return presentChannels.Count > 0;
+    }
+    //Starlight end
+
     public bool TryProccessCollectiveMindMessage(
         EntityUid source,
         string input,
@@ -249,7 +409,7 @@ public abstract class SharedChatSystem : EntitySystem
     // Starlight start
     public string SanitizeMessageOfEvilCharacters(string message)
     {
-        
+
         foreach (char c in ICDisallowedCharacters)
         {
             message = message.Replace($"{c}", "");
@@ -362,30 +522,149 @@ public abstract class SharedChatSystem : EntitySystem
         tagStart += tag.Length + 2;
         return rawmsg.Substring(tagStart, tagEnd - tagStart);
     }
-}
 
-// Starlight - Start
-/// <summary>
-///     InGame IC chat is for chat that is specifically ingame (not lobby) but is also in character, i.e. speaking.
-/// </summary>
-// ReSharper disable once InconsistentNaming
-[Serializable, NetSerializable]
-public enum InGameICChatType : byte // Make InGameIIChatType available in Shared
-{
-    Speak,
-    Emote,
-    Whisper,
-    CollectiveMind
-}
+    protected virtual void SendEntityEmote(
+        EntityUid source,
+        string action,
+        ChatTransmitRange range,
+        string? nameOverride,
+        LanguagePrototype language, // Starlight-edit: Languages
+        bool hideLog = false,
+        bool checkEmote = true,
+        bool ignoreActionBlocker = false,
+        NetUserId? author = null
+        )
+    { }
 
-/// <summary>
-///     InGame OOC chat is for chat that is specifically ingame (not lobby) but is OOC, like deadchat or LOOC.
-/// </summary>
-[Serializable, NetSerializable]
-public enum InGameOOCChatType : byte
-{
-    Looc,
-    Dead
+    /// <summary>
+    /// Sends an in-character chat message to relevant clients.
+    /// </summary>
+    /// <param name="source">The entity that is speaking.</param>
+    /// <param name="message">The message being spoken or emoted.</param>
+    /// <param name="desiredType">The chat type.</param>
+    /// <param name="hideChat">Whether or not this message should appear in the chat window.</param>
+    /// <param name="hideLog">Whether or not this message should appear in the adminlog window.</param>
+    /// <param name="shell"></param>
+    /// <param name="player">The player doing the speaking.</param>
+    /// <param name="nameOverride">The name to use for the speaking entity. Usually this should just be modified via <see cref="TransformSpeakerNameEvent"/>. If this is set, the event will not get raised.</param>
+    /// <param name="checkRadioPrefix">Whether or not <paramref name="message"/> should be parsed with consideration of radio channel prefix text at start the start.</param>
+    /// <param name="ignoreActionBlocker">If set to true, action blocker will not be considered for whether an entity can send this message.</param>
+    public virtual void TrySendInGameICMessage(
+        EntityUid source,
+        SpeechMessage message, // Starlight
+        InGameICChatType desiredType,
+        bool hideChat,
+        bool hideLog = false,
+        IConsoleShell? shell = null,
+        ICommonSession? player = null,
+        string? nameOverride = null,
+        bool checkRadioPrefix = true,
+        bool ignoreActionBlocker = false)
+    { }
+
+    /// <summary>
+    /// Sends an in-character chat message to relevant clients.
+    /// </summary>
+    /// <param name="source">The entity that is speaking.</param>
+    /// <param name="message">The message being spoken or emoted.</param>
+    /// <param name="desiredType">The chat type.</param>
+    /// <param name="range">Conceptual range of transmission, if it shows in the chat window, if it shows to far-away ghosts or ghosts at all...</param>
+    /// <param name="hideLog">Disables the admin log for this message if true. Used for entities that are not players, like vendors, cloning, etc.</param>
+    /// <param name="shell"></param>
+    /// <param name="player">The player doing the speaking.</param>
+    /// <param name="nameOverride">The name to use for the speaking entity. Usually this should just be modified via <see cref="TransformSpeakerNameEvent"/>. If this is set, the event will not get raised.</param>
+    /// <param name="ignoreActionBlocker">If set to true, action blocker will not be considered for whether an entity can send this message.</param>
+    /// <param name="languageOverride">Interpret this message as being in the specified language</param> // Starlight
+    public virtual void TrySendInGameICMessage(
+        EntityUid source,
+        SpeechMessage message, // Starlight
+        InGameICChatType desiredType,
+        ChatTransmitRange range,
+        bool hideLog = false,
+        IConsoleShell? shell = null,
+        ICommonSession? player = null,
+        string? nameOverride = null,
+        bool checkRadioPrefix = true,
+        bool ignoreActionBlocker = false,
+        LanguagePrototype? languageOverride = null // Starlight
+        )
+    { }
+
+    /// <summary>
+    /// Sends an out-of-character chat message to relevant clients.
+    /// </summary>
+    /// <param name="source">The entity that is speaking.</param>
+    /// <param name="message">The message being spoken or emoted.</param>
+    /// <param name="type">The chat type.</param>
+    /// <param name="hideChat">Whether or not to show the message in the chat window.</param>
+    /// <param name="shell"></param>
+    /// <param name="player">The player doing the speaking.</param>
+    public virtual void TrySendInGameOOCMessage(
+        EntityUid source,
+        string message,
+        InGameOOCChatType type,
+        bool hideChat,
+        IConsoleShell? shell = null,
+        ICommonSession? player = null
+        )
+    { }
+
+    /// <summary>
+    /// Dispatches an announcement to all.
+    /// </summary>
+    /// <param name="message">The contents of the message.</param>
+    /// <param name="sender">The sender (Communications Console in Communications Console Announcement).</param>
+    /// <param name="playSound">Play the announcement sound.</param>
+    /// <param name="announcementSound">Sound to play.</param>
+    /// <param name="colorOverride">Optional color for the announcement message.</param>
+    public virtual void DispatchGlobalAnnouncement(
+        SpeechMessage message,
+        string? sender = null,
+        bool playSound = true,
+        SoundSpecifier? announcementSound = null,
+        Color? colorOverride = null,
+        EntityUid? speaker = null // Starlight
+        )
+    { }
+
+    /// <summary>
+    /// Dispatches an announcement to players selected by filter.
+    /// </summary>
+    /// <param name="filter">Filter to select players who will recieve the announcement.</param>
+    /// <param name="message">The contents of the message.</param>
+    /// <param name="source">The entity making the announcement (used to determine the station).</param>
+    /// <param name="sender">The sender (Communications Console in Communications Console Announcement).</param>
+    /// <param name="playSound">Play the announcement sound.</param>
+    /// <param name="announcementSound">Sound to play.</param>
+    /// <param name="colorOverride">Optional color for the announcement message.</param>
+    public virtual void DispatchFilteredAnnouncement(
+        Filter filter,
+        SpeechMessage message, // Starlight
+        EntityUid? source = null,
+        string? sender = null,
+        bool playSound = true,
+        SoundSpecifier? announcementSound = null,
+        Color? colorOverride = null,
+        bool recordToReplay = true) // Starlight
+    { }
+
+    /// <summary>
+    /// Dispatches an announcement on a specific station.
+    /// </summary>
+    /// <param name="source">The entity making the announcement (used to determine the station).</param>
+    /// <param name="message">The contents of the message.</param>
+    /// <param name="sender">The sender (Communications Console in Communications Console Announcement).</param>
+    /// <param name="playDefaultSound">Play the announcement sound.</param>
+    /// <param name="announcementSound">Sound to play.</param>
+    /// <param name="colorOverride">Optional color for the announcement message.</param>
+    public virtual void DispatchStationAnnouncement(
+        EntityUid source,
+        SpeechMessage message, // Starlight
+        string? sender = null,
+        bool playDefaultSound = true,
+        SoundSpecifier? announcementSound = null,
+        Color? colorOverride = null)
+    { }
 }
 
 /// <summary>
@@ -403,4 +682,26 @@ public enum ChatTransmitRange : byte
     /// Ghosts can't hear or see it at all. Regular players can if in-range.
     NoGhosts
 }
-// Starlight - End
+
+/// <summary>
+/// InGame IC chat is for chat that is specifically ingame (not lobby) but is also in character, i.e. speaking.
+/// </summary>
+// ReSharper disable once InconsistentNaming
+[Serializable, NetSerializable] // Starlight
+public enum InGameICChatType : byte
+{
+    Speak,
+    Emote,
+    Whisper,
+    CollectiveMind // Starlight
+}
+
+/// <summary>
+/// InGame OOC chat is for chat that is specifically ingame (not lobby) but is OOC, like deadchat or LOOC.
+/// </summary>
+[Serializable, NetSerializable] // Starlight
+public enum InGameOOCChatType : byte
+{
+    Looc,
+    Dead
+}

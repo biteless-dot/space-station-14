@@ -33,6 +33,11 @@
       cell_slot:
         name: power-cell-slot-component-slot-name-default
         startingItem: PowerCellMedium
+        #Starlight Start
+        blacklist:
+          tags:
+          - MechReactor
+        #Starlight End
   # Starlight end
 
 - type: entity
@@ -40,17 +45,19 @@
   suffix: Filled
   parent: BoozeDispenserEmpty
   components:
-  - type: StorageFill
-    contents:
-    - id: DrinkAleBottleFullGrowler
-    - id: DrinkBeerGrowler
-    - id: DrinkCoffeeLiqueurBottleFull
-    - id: DrinkCognacBottleFull
-    - id: DrinkGinBottleFull
-    - id: DrinkMeadJug
-    - id: DrinkRumBottleFull
-    - id: DrinkTequilaBottleFull
-    - id: DrinkVermouthBottleFull
-    - id: DrinkVodkaBottleFull
-    - id: DrinkWhiskeyBottleFull
-    - id: DrinkWineBottleFull
+  - type: EntityTableContainerFill
+    containers:
+      storagebase: !type:AllSelector
+        children:
+        - id: DrinkAleBottleFullGrowler
+        - id: DrinkBeerGrowler
+        - id: DrinkCoffeeLiqueurBottleFull
+        - id: DrinkCognacBottleFull
+        - id: DrinkGinBottleFull
+        - id: DrinkMeadJug
+        - id: DrinkRumBottleFull
+        - id: DrinkTequilaBottleFull
+        - id: DrinkVermouthBottleFull
+        - id: DrinkVodkaBottleFull
+        - id: DrinkWhiskeyBottleFull
+        - id: DrinkWineBottleFull

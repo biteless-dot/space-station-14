@@ -6,27 +6,32 @@
   requirements:
   - !type:DepartmentTimeRequirement
     department: Medical
-    time: 9000 #2.5 hrs
+    time: 2.5h
   startingGear: ParamedicGear
   icon: "JobIconParamedic"
   supervisors: job-supervisors-cmo
+  canBeAntag: false # Starlight
   access:
   - Medical
   - Maintenance
   - Paramedic # Starlight
+  - External # Starlight
   extendedAccess:
   - Chemistry
-  - Surgery # Starlight
+  - Surgery # Starlight BEGIN
+  special:
+    - !type:AddImplantSpecial
+      implants: [ MindShieldImplant ]  # Starlight END
 
 - type: startingGear
   id: ParamedicGear
   equipment:
-    id: ParamedicPDA
     ears: ClothingHeadsetMedical
-    belt: ClothingBeltMedicalEMTFilled
+    belt: ClothingBeltMedicalEMTFilled # Starlight start
   storage:
     back:
     - EmergencyRollerBedSpawnFolded
+    - DefibrillatorParamed # Starlight end
 
 - type: chameleonOutfit
   id: ParamedicChameleonOutfit

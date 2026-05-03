@@ -104,7 +104,7 @@ public sealed partial class StationJobsSystem
 
         // Ok so the general algorithm:
         // Changed by 🌟Starlight🌟
-        // We start with the highest priority jobs and work our way down. We filter jobs by weight when selecting as well. 
+        // We start with the highest priority jobs and work our way down. We filter jobs by weight when selecting as well.
         // Priority > Weight > Station.
         for (var selectedPriority = JobPriority.High; selectedPriority > JobPriority.Never; selectedPriority--)
         {
@@ -360,7 +360,7 @@ public sealed partial class StationJobsSystem
                 if (weight is not null && job.Weight != weight.Value)
                     continue;
 
-                if (!(roleBans == null || !roleBans.Contains(jobId)))
+                if (!(roleBans == null || !roleBans.Contains(jobId))) //TODO: Replace with IsRoleBanned
                     continue;
 
                 availableJobs ??= new List<string>(playerJobs.Count);

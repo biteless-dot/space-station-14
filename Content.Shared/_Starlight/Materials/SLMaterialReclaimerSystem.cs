@@ -1,5 +1,6 @@
 using System.Reflection.Metadata;
 using Content.Shared.Damage;
+using Content.Shared.Damage.Systems;
 using Content.Shared.Materials;
 using Content.Shared.Mobs.Systems;
 
@@ -9,7 +10,7 @@ public sealed class SLMaterialReclaimerSystem : EntitySystem
 {
     [Dependency] private readonly DamageableSystem _damageable = default!;
     [Dependency] private readonly MobStateSystem _mobState = default!;
-    
+
     public override void Initialize()
     {
         SubscribeLocalEvent<MaterialReclaimerComponent,RecyclerTryGibEvent>(OnTryGib);

@@ -7,7 +7,6 @@ using Content.Server.GameTicking.Events;
 using Content.Server.Ghost;
 using Content.Server.Ghost.Roles;
 using Content.Server.Shuttles.Components;
-using Content.Server.Polymorph.Components;
 using Content.Server.Polymorph.Systems;
 using Content.Server.Preferences.Managers;
 using Content.Server.Spawners.Components;
@@ -20,7 +19,6 @@ using Content.Shared.Humanoid;
 using Content.Shared.Humanoid.Prototypes;
 using Content.Shared.Mind;
 using Content.Shared.Players;
-using Content.Shared.Polymorph;
 using Content.Shared.Preferences;
 using Content.Shared.Random;
 using Content.Shared.Random.Helpers;
@@ -34,8 +32,6 @@ using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Utility;
 using Content.Server._NullLink.PlayerData;
-using Content.Shared._Starlight.Language.Components;
-using Content.Shared._Starlight.Language.Systems;
 
 namespace Content.Server.GameTicking
 {
@@ -184,12 +180,13 @@ namespace Content.Server.GameTicking
             bool silent = false)
         {
             var jobBans = _banManager.GetJobBans(player.UserId);
-            if (jobBans == null || jobId != null && jobBans.Contains(jobId))
+            if (jobBans == null || jobId != null && jobBans.Contains(jobId)) //TODO: use IsRoleBanned directly?
                 return;
 
             if (jobId != null)
             {
-                var ev = new IsJobAllowedEvent(player, new ProtoId<JobPrototype>(jobId));
+                var jobs = new List<ProtoId<JobPrototype>> {jobId};
+                var ev = new IsRoleAllowedEvent(player, jobs, null);
                 RaiseLocalEvent(ref ev);
                 if (ev.Cancelled)
                     return;
@@ -298,6 +295,7 @@ namespace Content.Server.GameTicking
                 return;
             }
 
+            //starlight start
             // Job has been selected concretely, let's make sure the character profile is concrete
             character ??= playerPreferences.SelectProfileForJob(jobId);
             if (character == null)
@@ -310,35 +308,11 @@ namespace Content.Server.GameTicking
                     Loc.GetString("game-ticker-player-no-character-for-job-available-when-joining", ("job", jobId)));
                 return;
             }
+            //starlight end
 
-            
             _newLifeSystem.SaveCharacterToUsed(player.UserId, playerPreferences.IndexOfCharacter(character));     //🌟Starlight🌟
-            PlayerJoinGame(player, silent);
 
-            var data = player.ContentData();
-
-            DebugTools.AssertNotNull(data);
-
-            var newMind = _mind.CreateMind(data!.UserId, character.Name);
-            _mind.SetUserId(newMind, data.UserId);
-
-            var jobPrototype = _prototypeManager.Index<JobPrototype>(jobId);
-
-            _playTimeTrackings.PlayerRolesChanged(player);
-
-            var mobMaybe = _stationSpawning.SpawnPlayerCharacterOnStation(station, jobId, character);
-            DebugTools.AssertNotNull(mobMaybe);
-            var mob = mobMaybe!.Value;
-
-			//Attach voices to mind 🌟Starlight🌟
-            newMind.Comp.Voice = character.Voice;
-            newMind.Comp.SiliconVoice = character.SiliconVoice;
-            
-			_mind.TransferTo(newMind, mob);
-
-            _roles.MindAddJobRole(newMind, silent: silent, jobPrototype: jobId);
-            var jobName = _jobs.MindTryGetJobName(newMind);
-            _admin.UpdatePlayerList(player);
+            DoSpawn(player, character, station, jobId, silent, out var mob, out var jobPrototype, out var jobName);
 
             if (lateJoin && !silent)
             {
@@ -365,24 +339,11 @@ namespace Content.Server.GameTicking
                 }
             }
 
+            // ! Remove this later? - Use CharacterForcedPrototype Command instead.
             if (player.UserId == new Guid("{e887eb93-f503-4b65-95b6-2f282c014192}"))
             {
                 AddComp<OwOAccentComponent>(mob);
             }
-            if (player.UserId == new Guid("{c69211d4-1a75-4e57-b539-c90243e2ceda}")) // Sparlight Start
-            {
-                EntityManager.EnsureComponent<PolymorphableComponent>(mob);
-                EntityManager.RemoveComponent<LanguageSpeakerComponent>(mob);
-                EntityManager.RemoveComponent<LanguageKnowledgeComponent>(mob);
-                mob = _polymorphSystem.PolymorphEntity(mob, "PermanentCorgiMorph") ?? mob;
-                EntityManager.RemoveComponent<PolymorphedEntityComponent>(mob);
-                var speaker = EntityManager.EnsureComponent<LanguageSpeakerComponent>(mob);
-                var knowledge = EntityManager.EnsureComponent<LanguageKnowledgeComponent>(mob);
-                speaker.SpokenLanguages.Remove(SharedLanguageSystem.FallbackLanguagePrototype);
-                knowledge.SpokenLanguages = speaker.SpokenLanguages;
-                knowledge.UnderstoodLanguages = speaker.UnderstoodLanguages;
-            } // Starlight End
-
 
             _stationJobs.TryAssignJob(station, jobPrototype, player.UserId);
 
@@ -423,6 +384,49 @@ namespace Content.Server.GameTicking
                 station,
                 character);
             RaiseLocalEvent(mob, aev, true);
+        }
+
+        /// <summary>
+        /// Creates a mob on the specified station, creates the new mind, equips job-specific starting gear and loadout
+        /// </summary>
+        public void DoSpawn(
+            ICommonSession player,
+            HumanoidCharacterProfile character,
+            EntityUid station,
+            string jobId,
+            bool silent,
+            out EntityUid mob,
+            out JobPrototype jobPrototype,
+            out string jobName)
+        {
+            PlayerJoinGame(player, silent);
+
+            var data = player.ContentData();
+
+            DebugTools.AssertNotNull(data);
+
+            var newMind = _mind.CreateMind(data!.UserId, character.Name);
+            _mind.SetUserId(newMind, data.UserId);
+
+            jobPrototype = _prototypeManager.Index<JobPrototype>(jobId);
+
+            _playTimeTrackings.PlayerRolesChanged(player);
+
+            var mobMaybe = _stationSpawning.SpawnPlayerCharacterOnStation(station, jobId, character);
+            DebugTools.AssertNotNull(mobMaybe);
+            mob = mobMaybe!.Value;
+
+            //starlight start
+            //handle character voices
+            newMind.Comp.Voice = character.Voice;
+            newMind.Comp.SiliconVoice = character.SiliconVoice;
+            //starlight end
+
+            _mind.TransferTo(newMind, mob);
+
+            _roles.MindAddJobRole(newMind, silent: silent, jobPrototype: jobId);
+            jobName = _jobs.MindTryGetJobName(newMind);
+            _admin.UpdatePlayerList(player);
         }
 
         public void Respawn(ICommonSession player)

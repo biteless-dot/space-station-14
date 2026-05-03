@@ -5,7 +5,13 @@
   description: A folded membrane which rapidly expands into a large cubical shape on activation.
   suffix: Full
   components:
+  # Starlight start
+  - type: UserInterface
+    interfaces:
+      enum.StackCustomSplitUiKey.Key:
+        type: StackCustomSplitBoundUserInterface
   - type: Stack
+  # Starlight end
     stackType: InflatableWall
     count: 10
   - type: Sprite
@@ -14,6 +20,7 @@
   - type: Item
     sprite: Objects/Misc/inflatable_wall.rsi
     size: Small
+    storedRotation: 90
   - type: SpawnAfterInteract
     prototype: InflatableWall
     doAfter: 1
@@ -23,6 +30,7 @@
   - type: Tag
     tags:
     - Inflatable
+    - ConstructionMaterial #FH
 # TODO: Add stack sprites + visuals.
 
 - type: entity
@@ -32,7 +40,13 @@
   description: A folded membrane which rapidly expands into a large cubical shape on activation.
   suffix: Full
   components:
+    # Starlight start
+  - type: UserInterface
+    interfaces:
+      enum.StackCustomSplitUiKey.Key:
+        type: StackCustomSplitBoundUserInterface
   - type: Stack
+  # Starlight end
     stackType: InflatableDoor
     count: 4
   - type: Sprite
@@ -41,6 +55,7 @@
   - type: Item
     sprite: Objects/Misc/inflatable_door.rsi
     size: Small
+    storedRotation: 90
   - type: SpawnAfterInteract
     prototype: InflatableDoor
     doAfter: 1
@@ -50,6 +65,7 @@
   - type: Tag
     tags:
     - Inflatable
+    - ConstructionMaterial #FH
 # TODO: Add stack sprites + visuals.
 
 - type: entity

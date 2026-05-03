@@ -7,7 +7,7 @@
     state: icon
   - type: Clothing
     slots: [gloves]
-  - type: Food
+  - type: Edible
     requiresSpecialDigestion: true
   - type: Item
     size: Small
@@ -72,6 +72,11 @@
   - type: Tag
     tags:
     - Ring
+  - type: Engraveable # Starlight
+    engraveVerb: "engraving-verb-engrave"
+    noEngravingText: "engraving-ring-no-message"
+    engraveSuccessMessage: "engraving-ring-succeed"
+    hasEngravingText: "engraving-ring-has-message"
 
 - type: entity
   abstract: true

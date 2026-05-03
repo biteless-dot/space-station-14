@@ -14,7 +14,7 @@
     price: 0
   # Starlight-edit: start
   - type: ItemPrice
-    priceCategory: medical  
+    priceCategory: medical
   #Starlight-edit: end
 
 - type: entity
@@ -31,6 +31,9 @@
     state: ointment
   - type: Item
     heldPrefix: ointment
+    storedSprite:
+      state: ointment-storage
+      sprite: Objects/Specific/Medical/medical.rsi
   - type: Healing
     damageContainers:
       - Biological
@@ -226,6 +229,7 @@
   - type: Healing
     damageContainers:
       - Biological
+
     damage:
       types:
         Bloodloss: -0.5 #lowers bloodloss damage
@@ -265,6 +269,7 @@
     - type: Tag
       tags:
         - SecBeltEquip
+        - Tourniquet
     - type: Sprite
       state: tourniquet
     - type: Item
@@ -304,6 +309,7 @@
     state: gauze
   - type: Item
     heldPrefix: gauze
+    storedRotation: -90
   - type: Construction
     graph: Gauze
     node: gauze
@@ -397,7 +403,7 @@
   - type: Sprite
     state: pill16
   - type: Label
-    currentLabel: dexalin 10u
+    currentLabel: reagent-label-dexalin-10 # Starlight
   - type: SolutionContainerManager
     solutions:
       food:
@@ -413,11 +419,12 @@
   suffix: Dexalin 10u, 7
   components:
   - type: Label
-    currentLabel: dexalin 10u
-  - type: StorageFill
-    contents:
-    - id: PillDexalin
-      amount: 7
+    currentLabel: reagent-label-dexalin-10 # Starlight
+  - type: EntityTableContainerFill
+    containers:
+      storagebase:
+        id: PillDexalin
+        amount: 7
 
 - type: entity
   name: pill
@@ -430,7 +437,7 @@
   - type: Sprite
     state: pill10
   - type: Label
-    currentLabel: dylovene 10u
+    currentLabel: reagent-label-dylovene-10 # Starlight
   - type: SolutionContainerManager
     solutions:
       food:
@@ -446,11 +453,12 @@
   suffix: Dylovene 10u, 5
   components:
   - type: Label
-    currentLabel: dylovene 10u
-  - type: StorageFill
-    contents:
-    - id: PillDylovene
-      amount: 5
+    currentLabel: reagent-label-dylovene-10 # Starlight
+  - type: EntityTableContainerFill
+    containers:
+      storagebase:
+        id: PillDylovene
+        amount: 5
 
 - type: entity
   name: pill
@@ -463,7 +471,7 @@
   - type: Sprite
     state: pill17
   - type: Label
-    currentLabel: hyronalin 10u
+    currentLabel: reagent-label-hyronalin-10 # Starlight
   - type: SolutionContainerManager
     solutions:
       food:
@@ -479,11 +487,12 @@
   suffix: Hyronalin 10u, 5
   components:
   - type: Label
-    currentLabel: hyronalin 10u
-  - type: StorageFill
-    contents:
-    - id: PillHyronalin
-      amount: 5
+    currentLabel: reagent-label-hyronalin-10 # Starlight
+  - type: EntityTableContainerFill
+    containers:
+      storagebase:
+        id: PillHyronalin
+        amount: 5
 
 - type: entity
   name: pill
@@ -496,7 +505,7 @@
   - type: Sprite
     state: pill9
   - type: Label
-    currentLabel: potassium iodide 10u
+    currentLabel: reagent-label-potassium-iodine-10 # Starlight
   - type: SolutionContainerManager
     solutions:
       food:
@@ -512,11 +521,12 @@
   suffix: Potassium iodide 10u, 5
   components:
   - type: Label
-    currentLabel: potassium iodide 10u
-  - type: StorageFill
-    contents:
-    - id: PillPotassiumIodide
-      amount: 5
+    currentLabel: reagent-label-potassium-iodine-10 # Starlight
+  - type: EntityTableContainerFill
+    containers:
+      storagebase:
+        id: PillPotassiumIodide
+        amount: 5
 
 - type: entity
   name: pill
@@ -529,7 +539,7 @@
   - type: Sprite
     state: pill14
   - type: Label
-    currentLabel: iron 10u
+    currentLabel: reagent-label-iron-10 # Starlight
   - type: SolutionContainerManager
     solutions:
       food:
@@ -549,7 +559,7 @@
   - type: Sprite
     state: pill13
   - type: Label
-    currentLabel: copper 10u
+    currentLabel: reagent-label-copper-10 # Starlight
   - type: SolutionContainerManager
     solutions:
       food:
@@ -565,11 +575,12 @@
   suffix: Iron 10u, 5
   components:
   - type: Label
-    currentLabel: iron 10u
-  - type: StorageFill
-    contents:
-    - id: PillIron
-      amount: 5
+    currentLabel: reagent-label-iron-10 # Starlight
+  - type: EntityTableContainerFill
+    containers:
+      storagebase:
+        id: PillIron
+        amount: 5
 
 - type: entity
   name: pill canister
@@ -578,11 +589,12 @@
   suffix: Copper 10u, 5
   components:
   - type: Label
-    currentLabel: copper 10u
-  - type: StorageFill
-    contents:
-    - id: PillCopper
-      amount: 5
+    currentLabel: reagent-label-copper-10 # Starlight
+  - type: EntityTableContainerFill
+    containers:
+      storagebase:
+        id: PillCopper
+        amount: 5
 
 - type: entity
   name: pill
@@ -595,7 +607,7 @@
   - type: Sprite
     state: pill4
   - type: Label
-    currentLabel: kelotane 10u
+    currentLabel: reagent-label-kelotane-10 # Starlight
   - type: SolutionContainerManager
     solutions:
       food:
@@ -611,11 +623,12 @@
   suffix: Kelotane 10u, 5
   components:
   - type: Label
-    currentLabel: kelotane 10u
-  - type: StorageFill
-    contents:
-    - id: PillKelotane
-      amount: 5
+    currentLabel: reagent-label-kelotane-10 # Starlight
+  - type: EntityTableContainerFill
+    containers:
+      storagebase:
+        id: PillKelotane
+        amount: 5
 
 - type: entity
   name: pill
@@ -628,7 +641,7 @@
   - type: Sprite
     state: pill8
   - type: Label
-    currentLabel: dermaline 10u
+    currentLabel: reagent-label-dermaline-10 # Starlight
   - type: SolutionContainerManager
     solutions:
       food:
@@ -644,11 +657,12 @@
   suffix: Dermaline 10u, 5
   components:
   - type: Label
-    currentLabel: dermaline 10u
-  - type: StorageFill
-    contents:
-    - id: PillDermaline
-      amount: 5
+    currentLabel: reagent-label-dermaline-10 # Starlight
+  - type: EntityTableContainerFill
+    containers:
+      storagebase:
+        id: PillDermaline
+        amount: 5
 
 - type: entity
   name: space mirage
@@ -674,7 +688,7 @@
   - type: Sprite
     state: pill3
   - type: Label
-    currentLabel: tricordrazine 10u
+    currentLabel: reagent-label-tricordrazine-10 # Starlight
   - type: SolutionContainerManager
     solutions:
       food:
@@ -690,11 +704,12 @@
   suffix: Tricordrazine 10u, 5
   components:
   - type: Label
-    currentLabel: tricordrazine 10u
-  - type: StorageFill
-    contents:
-    - id: PillTricordrazine
-      amount: 5
+    currentLabel: reagent-label-tricordrazine-10 # Starlight
+  - type: EntityTableContainerFill
+    containers:
+      storagebase:
+        id: PillTricordrazine
+        amount: 5
 
 - type: entity
   name: pill
@@ -707,7 +722,7 @@
   - type: Sprite
     state: pill5
   - type: Label
-    currentLabel: bicaridine 10u
+    currentLabel: reagent-label-bicaridine-10 # Starlight
   - type: SolutionContainerManager
     solutions:
       food:
@@ -723,11 +738,12 @@
   suffix: Bicaridine 10u, 5
   components:
   - type: Label
-    currentLabel: bicaridine 10u
-  - type: StorageFill
-    contents:
-    - id: PillBicaridine
-      amount: 5
+    currentLabel: reagent-label-bicaridine-10 # Starlight
+  - type: EntityTableContainerFill
+    containers:
+      storagebase:
+        id: PillBicaridine
+        amount: 5
 
 - type: entity
   name: pill
@@ -740,7 +756,7 @@
   - type: Sprite
     state: pill21
   - type: Label
-    currentLabel: charcoal 10u
+    currentLabel: reagent-label-charcoal-10 # Starlight
   - type: SolutionContainerManager
     solutions:
       food:
@@ -756,11 +772,12 @@
   suffix: Charcoal 10u, 3
   components:
   - type: Label
-    currentLabel: charcoal 10u
-  - type: StorageFill
-    contents:
-    - id: PillCharcoal
-      amount: 3
+    currentLabel: reagent-label-charcoal-10 # Starlight
+  - type: EntityTableContainerFill
+    containers:
+      storagebase:
+        id: PillCharcoal
+        amount: 3
 
 - type: entity
   name: romerol pill
@@ -810,68 +827,49 @@
   id: PillCanisterRandom
   suffix: Random
   components:
-  - type: StorageFill
-    contents:
-    - id: PillDexalin
-      prob: 0.10
-      maxAmount: 7
-      orGroup: RandomPill
-    - id: PillDylovene
-      prob: 0.10
-      maxAmount: 7
-      orGroup: RandomPill
-    - id: PillHyronalin
-      prob: 0.10
-      maxAmount: 7
-      orGroup: RandomPill
-    - id: PillPotassiumIodide
-      prob: 0.10
-      maxAmount: 7
-      orGroup: RandomPill
-    - id: PillIron
-      prob: 0.10
-      maxAmount: 7
-      orGroup: RandomPill
-    - id: PillCopper
-      prob: 0.10
-      maxAmount: 7
-      orGroup: RandomPill
-    - id: PillKelotane
-      prob: 0.10
-      maxAmount: 7
-      orGroup: RandomPill
-    - id: PillDermaline
-      prob: 0.10
-      maxAmount: 7
-      orGroup: RandomPill
-    - id: PillTricordrazine
-      prob: 0.10
-      maxAmount: 7
-      orGroup: RandomPill
-    - id: PillBicaridine
-      prob: 0.10
-      maxAmount: 7
-      orGroup: RandomPill
-    - id: PillCharcoal
-      prob: 0.10
-      maxAmount: 7
-      orGroup: RandomPill
-    - id: PillAmbuzol
-      prob: 0.075
-      maxAmount: 7
-      orGroup: RandomPill
-    - id: PillAmbuzolPlus
-      prob: 0.075
-      maxAmount: 7
-      orGroup: RandomPill
-    - id: PillSpaceDrugs
-      prob: 0.075
-      maxAmount: 7
-      orGroup: RandomPill
-    - id: StrangePill
-      prob: 0.075
-      maxAmount: 7
-      orGroup: RandomPill
+  - type: EntityTableContainerFill
+    containers:
+      storagebase: !type:GroupSelector
+        children:
+        - id: PillDexalin
+          amount: &Range1to6 !type:RangeNumberSelector
+            range: 1, 6
+        - id: PillDylovene
+          amount: *Range1to6
+        - id: PillHyronalin
+          amount: *Range1to6
+        - id: PillPotassiumIodide
+          amount: *Range1to6
+        - id: PillIron
+          amount: *Range1to6
+        - id: PillCopper
+          amount: *Range1to6
+        - id: PillKelotane
+          amount: *Range1to6
+        - id: PillDermaline
+          amount: *Range1to6
+        - id: PillTricordrazine
+          amount: *Range1to6
+        - id: PillBicaridine
+          amount: *Range1to6
+        - id: PillCharcoal
+          amount: *Range1to6
+        - id: PillAmbuzol
+          weight: 0.75
+          amount: *Range1to6
+        - id: PillAmbuzolPlus
+          weight: 0.75
+          amount: *Range1to6
+        - id: PillSpaceDrugs
+          weight: 0.75
+          amount: *Range1to6
+        - id: StrangePill
+          weight: 0.75
+          amount: *Range1to6
+        - id: OminousPill # Starlight start
+          weight: 0.375
+          amount: !type:RangeNumberSelector
+            range: 0, 3 # Starlight end
 
 # Syringes
 - type: entity
@@ -1133,7 +1131,7 @@
   - type: Sprite
     state: pill3
   - type: Label
-    currentLabel: psicodine 10u
+    currentLabel: reagent-label-psicodine-10 # Starlight
   - type: SolutionContainerManager
     solutions:
       food:
@@ -1149,10 +1147,12 @@
   suffix: Psicodine 10u, 5
   components:
   - type: Label
-    currentLabel: psicodine 10u
-  - type: StorageFill
-    contents:
-    - id: PillPsicodine
-      amount: 5
+    currentLabel: reagent-label-psicodine-10 # Starlight
+  - type: EntityTableContainerFill
+    containers:
+      storagebase: !type:AllSelector
+        children:
+        - id: PillPsicodine
+          amount: 5
 
 ### SL end

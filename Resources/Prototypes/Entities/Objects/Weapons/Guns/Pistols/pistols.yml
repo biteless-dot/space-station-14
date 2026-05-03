@@ -25,6 +25,8 @@
   - type: Tag
     tags:
     - Sidearm
+  - type: CanDualWield # 🌟Starlight🌟
+    dualWieldInaccuracyPenalty: 30
   - type: Clothing
     sprite: Objects/Weapons/Guns/Pistols/viper.rsi
     quickEquip: false
@@ -53,10 +55,10 @@
         whitelist:
           tags:
             - MagazinePistol
+            - MagazinePistolHighCapacitySP # Starlight, dude, this typo meant no guns could actually use high capacity ammo
         whitelistFailPopup: gun-magazine-whitelist-fail
       gun_chamber:
         name: Chamber
-        startingItem: CartridgePistolSP
         priority: 1
         whitelist:
           tags:
@@ -65,6 +67,8 @@
     containers:
       gun_magazine: !type:ContainerSlot
       gun_chamber: !type:ContainerSlot
+      firing_pin: !type:Container # Starlight
+      ballistic-ammo: !type:Container
   - type: AmmoCounter
   - type: MagazineVisuals
     magState: mag
@@ -73,31 +77,47 @@
   - type: Appearance
   - type: StaticPrice
     price: 500
+  # starlight start
+  - type: ContainerFill
+    containers:
+      firing_pin:
+      - FiringPinPistol
+  - type: FiringPinHolder
+    supportedPins: [ Pistol, GunUpgrade ]
+  # starlight end
 
 - type: entity
   name: viper
   parent: [BaseWeaponPistol, BaseSyndicateContraband]
   id: WeaponPistolViper
-  description: A common handgun illegally modified by the Syndicate. The Viper sports a selector switch between semi-auto and ‘rock and roll’. The standard sidearm for any soldier who fights under the three serpents. Feeds from .35 pistol magazines.
+  description: A common handgun illegally modified by the Syndicate. The Viper sports a selector switch between semi-auto, "rock and roll", and "spray and pray". The standard sidearm for any soldier who fights under the three serpents. Feeds from .35 pistol magazines. # Starlight
   components:
   - type: Sprite
     sprite: Objects/Weapons/Guns/Pistols/viper.rsi
+  - type: Gun # Starlight start
+    fireRate: 6
+    selectedMode: SemiAuto
+    availableModes:
+      - SemiAuto
+      - FullAuto
+      - Burst
+    shotsPerBurst: 4
+    burstCooldown: 0.35 # Starlight end
   - type: ItemSlots
     slots:
       gun_magazine:
         name: Magazine
-        startingItem: MagazinePistolSP
+        startingItem: MagazinePistolHighCapacitySP # Starlight, starts with the high capacity now
         insertSound: /Audio/Weapons/Guns/MagIn/pistol_magin.ogg
         ejectSound: /Audio/Weapons/Guns/MagOut/pistol_magout.ogg
         priority: 2
         whitelist:
           tags:
             - MagazinePistol
-            - MagazinePistolHighCapacitySP
+            - MagazinePistolHighCapacitySP # Starlight, they couldn't actually use this before because Capacity without SP *doesn't exist as a tag*
         whitelistFailPopup: gun-magazine-whitelist-fail
       gun_chamber:
         name: Chamber
-        startingItem: CartridgePistolSP
         priority: 1
         whitelist:
           tags:
@@ -106,6 +126,7 @@
     containers:
       gun_magazine: !type:ContainerSlot
       gun_chamber: !type:ContainerSlot
+      firing_pin: !type:Container # starlight
   - type: StaticPrice
     price: 1000
 
@@ -133,15 +154,16 @@
   - type: ContainerContainer
     containers:
       ballistic-ammo: !type:Container
-  - type: ProjectileBatteryAmmoProvider
-    proto: BulletPistol
-    fireCost: 100
-  - type: Battery
-    maxCharge: 1000
-    startingCharge: 1000
-  - type: BatterySelfRecharger
-    autoRecharge: true
-    autoRechargeRate: 25
+  - type: BallisticAmmoProvider
+    whitelist:
+      tags:
+      - CartridgePistol
+    capacity: 10
+    proto: CartridgePistolSP
+    cycleable: false # No synthesizing ammo for your syndicate masters.
+  - type: BallisticAmmoSelfRefiller
+    autoRefillRate: 4s
+    affectedByEmp: true
   - type: AmmoCounter
 
 - type: entity
@@ -183,7 +205,6 @@
         whitelistFailPopup: gun-magazine-whitelist-fail
       gun_chamber:
         name: Chamber
-        startingItem: CartridgeCaselessRifle
         priority: 1
         whitelist:
           tags:
@@ -192,6 +213,7 @@
     containers:
       gun_magazine: !type:ContainerSlot
       gun_chamber: !type:ContainerSlot
+      firing_pin: !type:Container # starlight
   - type: StaticPrice
     price: 1500
 
@@ -245,7 +267,7 @@
     availableModes:
     - SemiAuto
     soundGunshot:
-      path: /Audio/Weapons/Guns/Gunshots/mk58.ogg
+      path: /Audio/_Starlight/Weapons/Guns/Gunshots/MK_Universal.ogg
   - type: ItemSlots
     slots:
       gun_magazine:
@@ -260,7 +282,6 @@
         whitelistFailPopup: gun-magazine-whitelist-fail
       gun_chamber:
         name: Chamber
-        startingItem: CartridgeMagnumSP
         priority: 1
         whitelist:
           tags:

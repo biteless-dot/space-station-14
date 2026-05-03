@@ -2,7 +2,7 @@ using System.Linq;
 using Content.Shared.Access.Components;
 using Content.Shared.Access.Systems;
 using Content.Shared.Administration.Logs;
-using Content.Shared.Damage;
+using Content.Shared.Damage.Systems;
 using Content.Shared.Database;
 using Content.Shared.Doors.Components;
 using Content.Shared.Emag.Systems;
@@ -123,7 +123,7 @@ public abstract partial class SharedDoorSystem : EntitySystem
         if (!TryComp<AirlockComponent>(uid, out var airlock))
             return;
 
-        if (!airlock.Powered) //starlight change
+        if (!airlock.Powered)
             return;
 
         if (door.State != DoorState.Closed)
@@ -208,7 +208,7 @@ public abstract partial class SharedDoorSystem : EntitySystem
         if (args.Handled || !pryingCapable || !door.ClickOpen)
             return;
         // Starlight edit end
-        
+
         if (!TryToggleDoor(uid, door, args.User, predicted: true))
             _pryingSystem.TryPry(uid, args.User, out _);
 
@@ -234,11 +234,19 @@ public abstract partial class SharedDoorSystem : EntitySystem
         if (door.State == DoorState.Closed)
         {
             _adminLog.Add(LogType.Action, LogImpact.Medium, $"{ToPrettyString(args.User)} pried {ToPrettyString(uid)} open");
+            // Starlight-start
+            var userEv = new UserPriedDoorEvent(uid, true);
+            RaiseLocalEvent(args.User, ref userEv);
+            // Starlight-end
             StartOpening(uid, door, args.User, true);
         }
         else if (door.State == DoorState.Open)
         {
             _adminLog.Add(LogType.Action, LogImpact.Medium, $"{ToPrettyString(args.User)} pried {ToPrettyString(uid)} closed");
+            // Starlight-start
+            var userEv = new UserPriedDoorEvent(uid, false);
+            RaiseLocalEvent(args.User, ref userEv);
+            // Starlight-end
             StartClosing(uid, door, args.User, true);
         }
     }
@@ -371,7 +379,7 @@ public abstract partial class SharedDoorSystem : EntitySystem
             Audio.PlayPvs(door.OpenSound, uid, AudioParams.Default.WithVolume(-5));
 
         if (lastState == DoorState.Emagging && TryComp<DoorBoltComponent>(uid, out var doorBoltComponent))
-            SetBoltsDown((uid, doorBoltComponent), !doorBoltComponent.BoltsDown, user, true);
+            SetBoltsDown((uid, doorBoltComponent), true, user, true);
     }
 
     /// <summary>
@@ -576,6 +584,13 @@ public abstract partial class SharedDoorSystem : EntitySystem
 
             if (!otherPhysics.Comp.CanCollide)
                 continue;
+
+            // Starlight start
+            // In order to make firelocks behave consistently between glass and non-glass airlocks, we
+            // need to match upstream's exclusion of glass airlock collision from the following block.
+            if (otherPhysics.Comp.CollisionLayer == (int) CollisionGroup.AirlockLayer)
+                continue;
+            // Starlight end
 
             //TODO: Make only shutters ignore these objects upon colliding instead of all airlocks
             // Excludes Glasslayer for windows, GlassAirlockLayer for windoors, TableLayer for tables

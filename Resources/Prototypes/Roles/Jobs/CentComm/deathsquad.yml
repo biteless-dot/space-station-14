@@ -3,11 +3,18 @@
   name: job-name-deathsquad
   description: job-description-deathsquad
   playTimeTracker: JobDeathSquad
+  requirements:
+  - !type:OverallPlaytimeRequirement
+    time: 20h
+  - !type:DepartmentTimeRequirement
+    department: Security
+    time: 10h
   setPreference: false
   startingGear: DeathSquadGear
-  icon: "JobIconCentComm"
+  icon: "JobIconDeathSquad"
   supervisors: job-supervisors-centcom
   canBeAntag: false
+  bypassEorPacification: true # Starlight
   accessGroups:
   - AllAccess
   access:

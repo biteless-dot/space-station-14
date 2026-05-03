@@ -28,3 +28,15 @@
 "Changes: C#":
 - changed-files:
   - any-glob-to-any-file: '**/*.cs'
+
+"Changes: Prototypes":
+- changed-files:
+  - any-glob-to-any-file: 'Resources/Prototypes/**/*.yml'
+
+#Starlight exclusive label
+"Changes: Guidebook":
+- changed-files:
+  - any-glob-to-any-file:
+    - 'Resources/ServerInfo/**/*.xml'
+    - 'Resources/Prototypes/Guidebook/**/*.yml'
+    - 'Resources/Prototypes/*/Guidebook/**/*.xml'

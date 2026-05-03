@@ -7,7 +7,8 @@ using Content.Shared.Actions;
 using Content.Shared.Actions.Components;
 using Content.Shared.Buckle;
 using Content.Shared.Coordinates;
-using Content.Shared.Damage;
+using Content.Shared.Damage.Components;
+using Content.Shared.Damage.Systems;
 using Content.Shared.Destructible;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.IdentityManagement;
@@ -56,7 +57,8 @@ public sealed partial class PolymorphSystem : EntitySystem
         SubscribeLocalEvent<PolymorphableComponent, ComponentStartup>(OnComponentStartup);
         SubscribeLocalEvent<PolymorphedEntityComponent, MapInitEvent>(OnMapInit);
 
-        SubscribeLocalEvent<PolymorphableComponent, PolymorphActionEvent>(OnPolymorphActionEvent);
+        SubscribeLocalEvent<PolymorphableComponent, PolymorphActionEvent>(OnPolymorphActionEvent); // Starlight-edit
+        SubscribeLocalEvent<PolymorphableComponent, PolymorphConfigActionEvent>(OnPolymorphConfigActionEvent); // Starlight
         SubscribeLocalEvent<PolymorphedEntityComponent, RevertPolymorphActionEvent>(OnRevertPolymorphActionEvent);
 
         SubscribeLocalEvent<PolymorphedEntityComponent, BeforeFullySlicedEvent>(OnBeforeFullySliced);
@@ -116,15 +118,21 @@ public sealed partial class PolymorphSystem : EntitySystem
         }
     }
 
+    // Starlight begin - Why the fuck these can't just be one event handler listening for BasePolymorphActionEvent is fucking beyond me.
     private void OnPolymorphActionEvent(Entity<PolymorphableComponent> ent, ref PolymorphActionEvent args)
     {
-        if (!_proto.Resolve(args.ProtoId, out var prototype) || args.Handled)
-            return;
-
-        PolymorphEntity(ent, prototype.Configuration);
-
+        if (args.Handled) return;
+        PolymorphEntity(ent, args.Config);
         args.Handled = true;
     }
+
+    private void OnPolymorphConfigActionEvent(Entity<PolymorphableComponent> ent, ref PolymorphConfigActionEvent args)
+    {
+        if (args.Handled) return;
+        PolymorphEntity(ent, args.Config);
+        args.Handled = true;
+    }
+    // Starlight end
 
     private void OnRevertPolymorphActionEvent(Entity<PolymorphedEntityComponent> ent,
         ref RevertPolymorphActionEvent args)
@@ -201,7 +209,7 @@ public sealed partial class PolymorphSystem : EntitySystem
 
         // mostly just for vehicles
         _buckle.TryUnbuckle(uid, uid, true);
-        
+
         var targetTransformComp = Transform(uid);
 
         if (configuration.PolymorphSound != null)
@@ -225,9 +233,7 @@ public sealed partial class PolymorphSystem : EntitySystem
                 || !EntityManager.TryGetComponent(uid, reg.Idx, out var comp))
                 continue;
 
-            var copy = _serialization.CreateCopy(comp, notNullableOverride: true);
-            copy.Owner = child;
-            AddComp(child, copy, true);
+            EntityManager.CopyComponent(uid, child, comp);
         }
         // Startlight - end
 
@@ -258,7 +264,7 @@ public sealed partial class PolymorphSystem : EntitySystem
             _mobThreshold.GetScaledDamage(uid, child, out var damage) &&
             damage != null)
         {
-            _damageable.SetDamage(child, damageParent, damage);
+            _damageable.SetDamage((child, damageParent), damage);
         }
 
         if (configuration.Inventory == PolymorphInventoryChange.Transfer)
@@ -353,7 +359,7 @@ public sealed partial class PolymorphSystem : EntitySystem
             _mobThreshold.GetScaledDamage(uid, parent, out var damage) &&
             damage != null)
         {
-            _damageable.SetDamage(parent, damageParent, damage);
+            _damageable.SetDamage((parent, damageParent), damage);
         }
 
         if (component.Configuration.Inventory == PolymorphInventoryChange.Transfer)
@@ -390,7 +396,7 @@ public sealed partial class PolymorphSystem : EntitySystem
             RemComp<UncryoableComponent>(parent);
         }
         //#endregion Starlight
-        
+
         if (TryComp<PolymorphableComponent>(parent, out var polymorphableComponent))
             polymorphableComponent.LastPolymorphEnd = _gameTiming.CurTime;
 
@@ -456,4 +462,41 @@ public sealed partial class PolymorphSystem : EntitySystem
         if (actions.TryGetValue(id, out var action))
             _actions.RemoveAction(target.Owner, action);
     }
+
+    //Starlight begin
+    public void CreatePolymorphAction(string id, PolymorphConfiguration config, EntityUid target, PolymorphableComponent? comp)
+    {
+        if (!Resolve(target, ref comp)) return;
+        comp.PolymorphConfigActions ??= new();
+        if (comp.PolymorphConfigActions.ContainsKey(id))
+            return;
+
+        var entProto = _proto.Index(config.Entity);
+
+        EntityUid? actionId = default!;
+        if (!_actions.AddAction(target, ref actionId, RevertPolymorphId, target))
+            return;
+
+        comp.PolymorphConfigActions.Add(id, actionId.Value);
+
+        var metaDataCache = MetaData(actionId.Value);
+        _metaData.SetEntityName(actionId.Value, Loc.GetString("polymorph-self-action-name", ("target", entProto.Name)), metaDataCache);
+        _metaData.SetEntityDescription(actionId.Value, Loc.GetString("polymorph-self-action-description", ("target", entProto.Name)), metaDataCache);
+
+        if (_actions.GetAction(actionId) is not {} action)
+            return;
+
+        _actions.SetIcon((action, action.Comp), new SpriteSpecifier.EntityPrototype(config.Entity));
+        _actions.SetEvent(action, new PolymorphConfigActionEvent(config));
+    }
+
+    public void RemovePolymorphAction(string id, EntityUid target, PolymorphableComponent? comp)
+    {
+        if (!Resolve(target, ref comp)) return;
+        if (comp.PolymorphConfigActions is not { } actions) return;
+        if (!actions.TryGetValue(id, out var action)) return;
+        _actions.RemoveAction(target, action);
+        actions.Remove(id);
+    }
+    //Starlight end
 }

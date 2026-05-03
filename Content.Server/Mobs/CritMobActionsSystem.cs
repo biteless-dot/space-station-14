@@ -1,14 +1,15 @@
 ﻿using Content.Server.Administration;
 using Content.Server.Chat.Systems;
 using Content.Server.Popups;
-using Content.Server.Speech.Muting;
+using Content.Shared.Chat;
 using Content.Shared.Mobs;
 using Content.Shared.Mobs.Components;
 using Content.Shared.Mobs.Systems;
 using Robust.Server.Console;
 using Robust.Shared.Player;
 using Content.Shared.Speech.Muting;
-using Content.Shared.Chat; // Starlight
+using Content.Shared.StatusEffectNew; //Starlight
+using Content.Shared._Starlight.BreathOrgan; //Starlight
 
 namespace Content.Server.Mobs;
 
@@ -23,6 +24,7 @@ public sealed class CritMobActionsSystem : EntitySystem
     [Dependency] private readonly MobStateSystem _mobState = default!;
     [Dependency] private readonly PopupSystem _popupSystem = default!;
     [Dependency] private readonly QuickDialogSystem _quickDialog = default!;
+    [Dependency] private readonly StatusEffectsSystem _status = default!; // Starlight
 
     private const int MaxLastWordsLength = 30;
 
@@ -49,10 +51,15 @@ public sealed class CritMobActionsSystem : EntitySystem
         if (!_mobState.IsCritical(uid))
             return;
 
+        //Starlight Start
+        _status.TrySetStatusEffectDuration(uid, HeldBreathSystem.HeldBreathId, out _);
+
         if (HasComp<MutedComponent>(uid))
         {
-            _popupSystem.PopupEntity(Loc.GetString("fake-death-muted"), uid, uid);
+            _popupSystem.PopupEntity(Loc.GetString("fake-death-muted-success"), uid, uid);
+            args.Handled = true;
             return;
+        //Starlight End
         }
 
         args.Handled = _deathgasp.Deathgasp(uid);

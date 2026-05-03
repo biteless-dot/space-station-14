@@ -1,5 +1,6 @@
 using Content.Shared.Changeling;
 using Content.Shared.Chemistry.Components;
+using Content.Shared.Chemistry.Reagent;
 using Content.Shared.Cuffs.Components;
 using Content.Shared.DoAfter;
 using Content.Shared.FixedPoint;
@@ -27,7 +28,11 @@ using Content.Shared.RetractableItemAction;
 using Content.Shared.Changeling.Systems;
 using Content.Shared.Changeling.Components;
 using Content.Server.Changeling.Systems;
-using Content.Shared.Humanoid; // Starlight edit
+// Starlight edit start
+using Content.Shared.Humanoid;
+using Content.Shared.Body.Components;
+using Content.Shared.Chemistry.Reagent;
+// Starlight edit end
 
 namespace Content.Server.Changeling;
 
@@ -35,6 +40,10 @@ public sealed partial class ChangelingSystem : EntitySystem
 {
     [Dependency] private readonly StatusEffectsSystem _statusEffect = default!;
     [Dependency] private readonly ChangelingIdentitySystem _changelingIdentitySystem = default!;
+
+    private static readonly ProtoId<ReagentPrototype> FerrochromicAcidPrototype = "FerrochromicAcid";
+    private static readonly ProtoId<ReagentPrototype> PolytrinicAcidPrototype = "PolytrinicAcid";
+
     public void SubscribeAbilities()
     {
         SubscribeLocalEvent<ChangelingComponent, OpenEvolutionMenuEvent>(OnOpenEvolutionMenu);
@@ -127,8 +136,19 @@ public sealed partial class ChangelingSystem : EntitySystem
 
         UpdateBiomass(uid, comp, comp.MaxBiomass - comp.TotalAbsorbedEntities);
 
-        _blood.ChangeBloodReagent(target, "FerrochromicAcid");
-        _blood.SpillAllSolutions(target);
+        // Starlight edit start - Do not turn the victim's blood into ferrochromic acid permanently
+        // allows for ling tests to still pass despite being hollowed.
+        if (TryComp<BloodstreamComponent>(target, out var bloodstream) && bloodstream.BloodReferenceSolution is { } originalBlood)
+        {
+            var blood = originalBlood.Clone();
+            blood.ScaleTo(originalBlood.Volume);
+            var ferroAcid = new ReagentQuantity(FerrochromicAcidPrototype, originalBlood.Volume);
+
+            _blood.ChangeBloodReagents(target, new Solution([ferroAcid]));
+            _blood.SpillAllSolutions(target);
+            _blood.ChangeBloodReagents(target, blood);
+        }
+        // Starlight edit end
 
         EnsureComp<AbsorbedComponent>(target);
 
@@ -229,7 +249,7 @@ public sealed partial class ChangelingSystem : EntitySystem
             return;
 
         // heal of everything
-        _damage.SetAllDamage(uid, damageable, 0);
+        _damage.SetAllDamage(uid, 0);
         _mobState.ChangeMobState(uid, MobState.Alive);
         _blood.TryModifyBloodLevel(uid, 1000);
         _blood.TryModifyBleedAmount(uid, -1000);
@@ -269,7 +289,7 @@ public sealed partial class ChangelingSystem : EntitySystem
 
         var pos = _transform.GetMapCoordinates(uid);
         var power = comp.ShriekPower;
-        _emp.EmpPulse(pos, power, 5000f, power * 2);
+        _emp.EmpPulse(pos, power, 5000f, power * TimeSpan.FromSeconds(2));
     }
     private void OnShriekResonant(EntityUid uid, ChangelingComponent comp, ref ShriekResonantEvent args)
     {
@@ -287,7 +307,7 @@ public sealed partial class ChangelingSystem : EntitySystem
     }
 
     private void OnToggleStrainedMuscles(EntityUid uid, ChangelingComponent comp, ref ToggleStrainedMusclesEvent args) => ToggleStrainedMuscles(uid, comp);
-    
+
     private void ToggleStrainedMuscles(EntityUid uid, ChangelingComponent comp)
     {
         if (!comp.StrainedMusclesActive)
@@ -393,14 +413,19 @@ public sealed partial class ChangelingSystem : EntitySystem
     {
         if (TryComp<CuffableComponent>(uid, out var cuffs) && cuffs.Container.ContainedEntities.Count > 0)
         {
-            var cuff = cuffs.LastAddedCuffs;
+            if (_cuffs.TryGetLastCuff(uid, out var cuff))
+            {
+                if (cuff.HasValue)
+                {
+                    _cuffs.Uncuff(uid, uid, cuff.Value);
+                }
+            }
 
-            _cuffs.Uncuff(uid, cuffs.LastAddedCuffs, cuff);
             QueueDel(cuff);
         }
 
         var soln = new Solution();
-        soln.AddReagent("PolytrinicAcid", 10f);
+        soln.AddReagent(PolytrinicAcidPrototype, 10f);
 
         if (_pull.IsPulled(uid))
         {
@@ -478,7 +503,7 @@ public sealed partial class ChangelingSystem : EntitySystem
     }
     public void OnLesserForm(EntityUid uid, ChangelingComponent comp, ref ActionLesserFormEvent args)
     {
-        var newUid = TransformEntity(uid, protoId: "MobMonkey", comp: comp);
+        var newUid = TransformEntity(uid, protoId: "MobLingMonkey", comp: comp); // Starlight - fix lesser form
         if (newUid == null)
         {
             comp.Chemicals += Comp<ChangelingActionComponent>(args.Action).ChemicalCost;

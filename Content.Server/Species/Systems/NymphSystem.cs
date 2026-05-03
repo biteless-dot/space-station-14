@@ -1,33 +1,28 @@
 using Content.Server.Mind;
 using Content.Shared.Species.Components;
-using Content.Shared.Body.Events;
 using Content.Shared.Zombies;
 using Content.Server.Zombies;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Timing;
+using Content.Shared._Starlight.Medical.Body.Events;
 
 namespace Content.Server.Species.Systems;
 
 public sealed partial class NymphSystem : EntitySystem
 {
-    [Dependency] private readonly IPrototypeManager _protoManager= default!;
+    [Dependency] private readonly IPrototypeManager _protoManager = default!;
     [Dependency] private readonly MindSystem _mindSystem = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly ZombieSystem _zombie = default!;
 
     public override void Initialize()
     {
         base.Initialize();
 
-        SubscribeLocalEvent<NymphComponent, OrganRemovedFromBodyEvent>(OnRemovedFromPart);
+        SubscribeLocalEvent<NymphComponent, OrganRemovedFromBodyEvent>(OnRemovedFromPart); // Starlight
     }
 
-    private void OnRemovedFromPart(EntityUid uid, NymphComponent comp, ref OrganRemovedFromBodyEvent args)
+    private void OnRemovedFromPart(EntityUid uid, NymphComponent comp, ref OrganRemovedFromBodyEvent args) // Starlight
     {
-        if (!_timing.IsFirstTimePredicted)
-            return;
-
-        if (TerminatingOrDeleted(uid) || TerminatingOrDeleted(args.OldBody))
+        if (TerminatingOrDeleted(uid) || TerminatingOrDeleted(args.OldBody)) // Starlight
             return;
 
         if (!_protoManager.TryIndex<EntityPrototype>(comp.EntityPrototype, out var entityProto))
@@ -37,11 +32,11 @@ public sealed partial class NymphSystem : EntitySystem
         var coords = Transform(uid).Coordinates;
         var nymph = SpawnAtPosition(entityProto.ID, coords);
 
-        if (HasComp<ZombieComponent>(args.OldBody)) // Zombify the new nymph if old one is a zombie
+        if (HasComp<ZombieComponent>(args.OldBody)) // Zombify the new nymph if old one is a zombie // Starlight
             _zombie.ZombifyEntity(nymph);
 
         // Move the mind if there is one and it's supposed to be transferred
-        if (comp.TransferMind == true && _mindSystem.TryGetMind(args.OldBody, out var mindId, out var mind))
+        if (comp.TransferMind == true && _mindSystem.TryGetMind(args.OldBody, out var mindId, out var mind)) // Starlight
             _mindSystem.TransferTo(mindId, nymph, mind: mind);
 
         // Delete the old organ

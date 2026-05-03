@@ -44,6 +44,7 @@ using Robust.Shared.Utility;
 using Content.Shared.Rounding;
 using Robust.Shared.Collections;
 using Robust.Shared.Map.Enumerators;
+using Content.Shared.Starlight.Medical.Surgery.Steps.Parts; // Starlight
 
 namespace Content.Shared.Storage.EntitySystems;
 
@@ -147,6 +148,7 @@ public abstract class SharedStorageSystem : EntitySystem
         SubscribeLocalEvent<StorageComponent, InteractUsingEvent>(OnInteractUsing, after: new[] { typeof(ItemSlotsSystem) });
         SubscribeLocalEvent<StorageComponent, ActivateInWorldEvent>(OnActivate);
         SubscribeLocalEvent<StorageComponent, OpenStorageImplantEvent>(OnImplantActivate);
+        SubscribeLocalEvent<StorageComponent, OpenStorageOrganEvent>(OnOrganActivate);//Starlight
         SubscribeLocalEvent<StorageComponent, AfterInteractEvent>(AfterInteract);
         SubscribeLocalEvent<StorageComponent, DestructionEventArgs>(OnDestroy);
         SubscribeLocalEvent<StorageComponent, BoundUserInterfaceMessageAttempt>(OnBoundUIAttempt);
@@ -445,6 +447,11 @@ public abstract class SharedStorageSystem : EntitySystem
         if (!Resolve(uid, ref storageComp, false))
             return;
 
+        // Starlight-start: TODO change this to before storage opened event
+        if (HasComp<LockedStorageComponent>(uid) && TryComp<LockComponent>(uid, out var lockComponent) && lockComponent.Locked)
+            return;
+        // Starlight-end
+
         // prevent spamming bag open / honkerton honk sound
         silent |= TryComp<UseDelayComponent>(uid, out var useDelay) && UseDelay.IsDelayed((uid, useDelay), id: OpenUiUseDelayID);
         if (!CanInteract(entity, (uid, storageComp), silent: silent))
@@ -573,6 +580,29 @@ public abstract class SharedStorageSystem : EntitySystem
         args.Handled = true;
     }
 
+    //Starlight Start
+    /// <summary>
+    /// Specifically for storage organs.
+    /// </summary>
+    private void OnOrganActivate(EntityUid uid, StorageComponent storageComp, OpenStorageOrganEvent args)
+    {
+        if (args.Handled)
+            return;
+
+        if(!TryComp(uid, out StorageOrganComponent? organ) || organ.ActionKey != args.Key)
+            return;
+
+        var uiOpen = UI.IsUiOpen(uid, StorageComponent.StorageUiKey.Key, args.Performer);
+
+        if (uiOpen)
+            UI.CloseUi(uid, StorageComponent.StorageUiKey.Key, args.Performer);
+        else
+            OpenStorageUI(uid, args.Performer, storageComp, false);
+
+        args.Handled = true;
+    }
+    //Starlight End
+
     /// <summary>
     /// Allows a user to pick up entities by clicking them, or pick up all entities in a certain radius
     /// around a click.
@@ -604,7 +634,7 @@ public abstract class SharedStorageSystem : EntitySystem
                 }
 
                 _entList.Add(entity);
-                delay += itemSize.Weight * AreaInsertDelayPerItem;
+                delay += itemSize.Weight;
 
                 if (_entList.Count >= StorageComponent.AreaPickupLimit)
                     break;
@@ -613,7 +643,7 @@ public abstract class SharedStorageSystem : EntitySystem
             //If there's only one then let's be generous
             if (_entList.Count >= 1)
             {
-                var doAfterArgs = new DoAfterArgs(EntityManager, args.User, delay, new AreaPickupDoAfterEvent(GetNetEntityList(_entList)), uid, target: uid)
+                var doAfterArgs = new DoAfterArgs(EntityManager, args.User, delay * AreaInsertDelayPerItem, new AreaPickupDoAfterEvent(GetNetEntityList(_entList)), uid, target: uid)
                 {
                     BreakOnDamage = true,
                     BreakOnMove = true,
@@ -1108,7 +1138,7 @@ public abstract class SharedStorageSystem : EntitySystem
         }
 
         if (_whitelistSystem.IsWhitelistFail(storageComp.Whitelist, insertEnt) ||
-            _whitelistSystem.IsBlacklistPass(storageComp.Blacklist, insertEnt))
+            _whitelistSystem.IsWhitelistPass(storageComp.Blacklist, insertEnt))
         {
             reason = "comp-storage-invalid-container";
             return false;
@@ -1269,7 +1299,7 @@ public abstract class SharedStorageSystem : EntitySystem
             if (!_stackQuery.TryGetComponent(ent, out var containedStack))
                 continue;
 
-            if (!_stack.TryAdd(insertEnt, ent, insertStack, containedStack))
+            if (!_stack.TryMergeStacks((insertEnt, insertStack), (ent, containedStack), out var _))
                 continue;
 
             stackedEntity = ent;
@@ -1703,7 +1733,7 @@ public abstract class SharedStorageSystem : EntitySystem
     /// <summary>
     /// Updates the occupied grid mask for the entity.
     /// </summary>
-    protected void UpdateOccupied(Entity<StorageComponent> ent)
+    public void UpdateOccupied(Entity<StorageComponent> ent) // Starlight edit - Need this public for toolshed command otherwise i will go insane
     {
         ent.Comp.OccupiedGrid.Clear();
         RemoveOccupied(ent.Comp.Grid, ent.Comp.OccupiedGrid);
@@ -1823,7 +1853,7 @@ public abstract class SharedStorageSystem : EntitySystem
         return GetCumulativeItemAreas(uid) < uid.Comp.Grid.GetArea() || HasSpaceInStacks(uid);
     }
 
-    private bool HasSpaceInStacks(Entity<StorageComponent?> uid, string? stackType = null)
+    private bool HasSpaceInStacks(Entity<StorageComponent?> uid, ProtoId<StackPrototype>? stackType = null)
     {
         if (!Resolve(uid, ref uid.Comp))
             return false;
@@ -1833,7 +1863,7 @@ public abstract class SharedStorageSystem : EntitySystem
             if (!_stackQuery.TryGetComponent(contained, out var stack))
                 continue;
 
-            if (stackType != null && !stack.StackTypeId.Equals(stackType))
+            if (stackType != null && stack.StackTypeId != stackType)
                 continue;
 
             if (_stack.GetAvailableSpace(stack) == 0)

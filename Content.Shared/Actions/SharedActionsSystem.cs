@@ -454,7 +454,7 @@ public abstract partial class SharedActionsSystem : EntitySystem
         if (_whitelist.IsWhitelistFail(comp.Whitelist, target))
             return false;
 
-        if (_whitelist.IsBlacklistPass(comp.Blacklist, target))
+        if (_whitelist.IsWhitelistPass(comp.Blacklist, target))
             return false;
 
         if (_actionQuery.Comp(uid).CheckCanInteract && !_actionBlocker.CanInteract(user, target))
@@ -490,7 +490,7 @@ public abstract partial class SharedActionsSystem : EntitySystem
         if (comp.CheckCanAccess)
             return _interaction.InRangeUnobstructed(user, coords, range: comp.Range);
 
-        // Starlight start 
+        // Starlight start
         // I'm writing this for the FIFTH fucking time. If this line disappears again, I'll find who did it.
         if (!comp.CheckMap)
             return true;
@@ -628,7 +628,7 @@ public abstract partial class SharedActionsSystem : EntitySystem
             SetCooldown((action, action), cooldown);
         else if (!IsCooldownActive(action.Comp))
             StartUseDelay((action, action));
-        
+
         // Starlight-end
 
         UpdateAction(action);

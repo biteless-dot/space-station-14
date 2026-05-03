@@ -2,12 +2,15 @@ using System.Linq;
 using System.Numerics;
 using Content.Server.Administration.Logs;
 using Content.Server.Atmos.Components;
+using Content.Server.Atmos.EntitySystems;
+using Content.Server.Destructible;
 using Content.Server.NodeContainer.EntitySystems;
 using Content.Server.NPC.Pathfinding;
 using Content.Shared.Atmos.Components;
 using Content.Shared.Camera;
 using Content.Shared.CCVar;
-using Content.Shared.Damage;
+using Content.Shared.Damage.Components;
+using Content.Shared.Damage.Systems;
 using Content.Shared.Database;
 using Content.Shared.Explosion;
 using Content.Shared.Explosion.Components;
@@ -16,7 +19,6 @@ using Content.Shared.GameTicking;
 using Content.Shared.Inventory;
 using Content.Shared.Projectiles;
 using Content.Shared.Throwing;
-using Robust.Server.GameObjects;
 using Robust.Server.GameStates;
 using Robust.Server.Player;
 using Robust.Shared.Audio.Systems;
@@ -27,6 +29,7 @@ using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Utility;
+using Content.Shared._Starlight.Camera; // Starlight | ES Screenshake
 
 namespace Content.Server.Explosion.EntitySystems;
 
@@ -38,23 +41,30 @@ public sealed partial class ExplosionSystem : SharedExplosionSystem
     [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
     [Dependency] private readonly IConfigurationManager _cfg = default!;
     [Dependency] private readonly IPlayerManager _playerManager = default!;
+    [Dependency] private readonly IAdminLogManager _adminLogger = default!;
 
-    [Dependency] private readonly MapSystem _mapSystem = default!;
     [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
     [Dependency] private readonly DamageableSystem _damageableSystem = default!;
     [Dependency] private readonly NodeGroupSystem _nodeGroupSystem = default!;
     [Dependency] private readonly PathfindingSystem _pathfindingSystem = default!;
     [Dependency] private readonly SharedCameraRecoilSystem _recoilSystem = default!;
-    [Dependency] private readonly IAdminLogManager _adminLogger = default!;
     [Dependency] private readonly ThrowingSystem _throwingSystem = default!;
     [Dependency] private readonly PvsOverrideSystem _pvsSys = default!;
     [Dependency] private readonly SharedAudioSystem _audio = default!;
     [Dependency] private readonly SharedTransformSystem _transformSystem = default!;
     [Dependency] private readonly SharedMapSystem _map = default!;
+    [Dependency] private readonly FlammableSystem _flammableSystem = default!;
+    [Dependency] private readonly DestructibleSystem _destructibleSystem = default!;
+    [Dependency] private readonly AtmosphereSystem _atmosphere = default!;
+    [Dependency] private readonly ScreenshakeSystem _shake = default!; // Starlight | ES Screenshake
 
     private EntityQuery<FlammableComponent> _flammableQuery;
     private EntityQuery<PhysicsComponent> _physicsQuery;
     private EntityQuery<ProjectileComponent> _projectileQuery;
+    private EntityQuery<ActorComponent> _actorQuery;
+    private EntityQuery<DestructibleComponent> _destructibleQuery;
+    private EntityQuery<DamageableComponent> _damageableQuery;
+    private EntityQuery<AirtightComponent> _airtightQuery;
 
     /// <summary>
     ///     "Tile-size" for space when there are no nearby grids to use as a reference.
@@ -93,6 +103,12 @@ public sealed partial class ExplosionSystem : SharedExplosionSystem
         _flammableQuery = GetEntityQuery<FlammableComponent>();
         _physicsQuery = GetEntityQuery<PhysicsComponent>();
         _projectileQuery = GetEntityQuery<ProjectileComponent>();
+        _actorQuery = GetEntityQuery<ActorComponent>();
+        _destructibleQuery = GetEntityQuery<DestructibleComponent>();
+        _damageableQuery = GetEntityQuery<DamageableComponent>();
+        _airtightQuery = GetEntityQuery<AirtightComponent>();
+
+        _prototypeManager.PrototypesReloaded += ReloadExplosionPrototypes;
     }
 
     private void OnReset(RoundRestartCleanupEvent ev)
@@ -111,6 +127,7 @@ public sealed partial class ExplosionSystem : SharedExplosionSystem
         base.Shutdown();
         _nodeGroupSystem.PauseUpdating = false;
         _pathfindingSystem.PauseUpdating = false;
+        _prototypeManager.PrototypesReloaded -= ReloadExplosionPrototypes;
     }
 
     private void RelayedResistance(EntityUid uid, ExplosionResistanceComponent component,
@@ -246,10 +263,13 @@ public sealed partial class ExplosionSystem : SharedExplosionSystem
             var logImpact = (alertMinExplosionIntensity > -1 && totalIntensity >= alertMinExplosionIntensity)
                 ? LogImpact.Extreme
                 : LogImpact.High;
-            _adminLogger.Add(LogType.Explosion, logImpact,
-                $"{ToPrettyString(user.Value):user} caused {ToPrettyString(uid):entity} to explode ({typeId}) at Pos:{(posFound ? $"{gridPos:coordinates}" : "[Grid or Map not found]")} with intensity {totalIntensity} slope {slope}");
+            if (posFound)
+                _adminLogger.Add(LogType.Explosion, logImpact, $"{ToPrettyString(user.Value):user} caused {ToPrettyString(uid):entity} to explode ({typeId}) at Pos:{gridPos:coordinates} with intensity {totalIntensity} slope {slope}");
+            else
+                _adminLogger.Add(LogType.Explosion, logImpact, $"{ToPrettyString(user.Value):user} caused {ToPrettyString(uid):entity} to explode ({typeId}) at Pos:[Grid or Map not found] with intensity {totalIntensity} slope {slope}");
         }
     }
+
 
     /// <summary>
     ///     Queue an explosion, with a specified epicenter and set of starting tiles.
@@ -317,7 +337,7 @@ public sealed partial class ExplosionSystem : SharedExplosionSystem
     private Explosion? SpawnExplosion(QueuedExplosion queued)
     {
         var pos = queued.Epicenter;
-        if (!_mapSystem.MapExists(pos.MapId))
+        if (!_map.MapExists(pos.MapId))
             return null;
 
         var results = GetExplosionTiles(pos, queued.Proto.ID, queued.TotalIntensity, queued.Slope, queued.MaxTileIntensity);
@@ -329,15 +349,13 @@ public sealed partial class ExplosionSystem : SharedExplosionSystem
 
         var visualEnt = CreateExplosionVisualEntity(pos, queued.Proto.ID, spaceMatrix, spaceData, gridData.Values, iterationIntensity);
 
-        // camera shake
-        CameraShake(iterationIntensity.Count * 4f, pos, queued.TotalIntensity * 10f);
-        
+        //Starlight begin | ES Screenshake
         // smoke
-        
+
         SpawnSmokeInRadius(iterationIntensity.Count, pos, queued.TotalIntensity);
 
         //For whatever bloody reason, sound system requires ENTITY coordinates.
-        var mapEntityCoords = _transformSystem.ToCoordinates(_mapSystem.GetMap(pos.MapId), pos);
+        var mapEntityCoords = _transformSystem.ToCoordinates(_map.GetMap(pos.MapId), pos);
 
         // play sound.
         // for the normal audio, we want everyone in pvs range
@@ -365,6 +383,10 @@ public sealed partial class ExplosionSystem : SharedExplosionSystem
             ? queued.Proto.SmallSoundFar
             : queued.Proto.SoundFar;
 
+        // camera shake - moved down here since as far as i can tell there is zero reason it can't be here
+        CameraShake(iterationIntensity, pos, queued);
+        //Starlight end
+
         _audio.PlayGlobal(farSound, farFilter, true, farSound.Params);
 
         return new Explosion(this,
@@ -380,12 +402,12 @@ public sealed partial class ExplosionSystem : SharedExplosionSystem
             queued.MaxTileBreak,
             queued.CanCreateVacuum,
             EntityManager,
-            _mapManager,
             visualEnt,
             queued.Cause,
-            _map);
+            _map,
+            _damageableSystem);
     }
-    
+
     private void SpawnSmokeInRadius(float range, MapCoordinates epicenter, float totalIntensity)
     {
         var smokeCount = (int)(range / 2);
@@ -412,8 +434,11 @@ public sealed partial class ExplosionSystem : SharedExplosionSystem
         }
     }
 
-    private void CameraShake(float range, MapCoordinates epicenter, float totalIntensity)
+    //Starlight begin
+    private void CameraShake(List<float> rangeList, MapCoordinates epicenter, QueuedExplosion queued)
     {
+        var range = rangeList.Count * 4f;
+        var totalIntensity = queued.TotalIntensity * 10f;
         var players = Filter.Empty();
         players.AddInRange(epicenter, range, _playerManager, EntityManager);
 
@@ -431,7 +456,14 @@ public sealed partial class ExplosionSystem : SharedExplosionSystem
             var distance = delta.Length();
             var effect = 5 * MathF.Pow(totalIntensity, 0.5f) * (1 - distance / range);
             if (effect > 0.01f)
-                _recoilSystem.KickCamera(uid, -delta.Normalized() * effect);
+            {
+                _recoilSystem.KickCamera(uid, -delta.Normalized() * effect * 0.4f);
+                var shakeParams = rangeList.Count < queued.Proto.SmallSoundIterationThreshold
+                    ? new ScreenshakeParameters { Trauma = 0.4f, DecayRate = 0.2f, Frequency = 0.014f }
+                    : new ScreenshakeParameters { Trauma = 0.6f, DecayRate = 0.05f, Frequency = 0.014f };
+                _shake.Screenshake(players, shakeParams, null);
+            }
         }
     }
+    //Starlight end
 }

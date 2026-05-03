@@ -6,6 +6,7 @@ using Content.Server.GameTicking.Events;
 using Content.Server.Players.RateLimiting;
 using Content.Shared.CCVar;
 using Content.Shared.GameTicking;
+using Content.Shared.Administration.Events;
 using Robust.Server.Player;
 using Robust.Shared.Configuration;
 using Robust.Shared.Player;
@@ -18,9 +19,11 @@ namespace Content.Server._NullLink;
 public sealed partial class HubSystem : EntitySystem
 {
     private static readonly TimeSpan _minInterval = TimeSpan.FromMilliseconds(300);
-    private TimeSpan _lastSent;         
-    private bool _sendScheduled;   
+    private TimeSpan _lastSent;
+    private bool _sendScheduled;
     private int _maxPlayers;
+    private string _mapName = "Unknown";
+    private string _gamemodeName = "Unknown";
 
     private ServerInfoRequest _serverInfo = new();
 
@@ -31,8 +34,19 @@ public sealed partial class HubSystem : EntitySystem
         SubscribeLocalEvent<RoundRestartCleanupEvent>(_ => OnLobby());
         SubscribeLocalEvent<RoundEndTextAppendEvent>(_ => OnRoundEnding());
         SubscribeLocalEvent<RoundStartingEvent>(_ => OnRoundStart());
+        SubscribeLocalEvent<PanicBunkerChangedEvent>(OnPanicBunkerChanged);
 
         _playerManager.PlayerStatusChanged += OnPlayerStatusChanged;
+    }
+
+    private void OnPanicBunkerChanged(PanicBunkerChangedEvent args)
+    {
+        if (_serverInfo.PanicBunkerActive == args.Status.Enabled) return;
+        _serverInfo = _serverInfo with
+        {
+            PanicBunkerActive = args.Status.Enabled
+        };
+        TryUpdateServerInfo();
     }
 
     private void OnSoftMaxPlayersChanged(int maxPlayers)
@@ -54,12 +68,16 @@ public sealed partial class HubSystem : EntitySystem
 
     private void OnRoundStart()
     {
+        _mapName = _gameMapManager.GetSelectedMap()?.MapName ?? "Unknown";
+        _gamemodeName = _gameTicker.CurrentPreset?.ModeTitle ?? "Unknown";
         _serverInfo = _serverInfo with
         {
             CurrentStateStartedAt = DateTime.UtcNow,
             Status = ServerStatus.Round,
             Players = _playerManager.PlayerCount,
             MaxPlayers = _maxPlayers,
+            MapName = _mapName,
+            GamemodeName = _gamemodeName,
         };
         TryUpdateServerInfo();
     }
@@ -76,12 +94,16 @@ public sealed partial class HubSystem : EntitySystem
     }
     private void OnLobby()
     {
+        _mapName = "Unknown";
+        _gamemodeName = "Unknown";
         _serverInfo = _serverInfo with
         {
             CurrentStateStartedAt = DateTime.UtcNow,
             Status = ServerStatus.Lobby,
             Players = _playerManager.PlayerCount,
             MaxPlayers = _maxPlayers,
+            MapName = _mapName,
+            GamemodeName = _gamemodeName,
         };
         TryUpdateServerInfo();
     }
@@ -96,11 +118,11 @@ public sealed partial class HubSystem : EntitySystem
             return;
         }
 
-        if (_sendScheduled)              
+        if (_sendScheduled)
             return;
 
         _sendScheduled = true;
-        var delay = nextAllowed - now;   
+        var delay = nextAllowed - now;
 
         Pipe.RunInBackground(async () =>
         {
@@ -111,7 +133,7 @@ public sealed partial class HubSystem : EntitySystem
             }
             finally
             {
-                _sendScheduled = false; 
+                _sendScheduled = false;
             }
         },
         ex => _sawmill.Log(LogLevel.Warning, ex,
@@ -122,8 +144,8 @@ public sealed partial class HubSystem : EntitySystem
     {
         _lastSent = _timing.RealTime;
 
-        return _actors.TryGetServerGrain(out var serverGrain) 
-            ? serverGrain!.UpdateServerInfo(_serverInfo) 
+        return _actors.TryGetServerGrain(out var serverGrain)
+            ? serverGrain!.UpdateServerInfo(_serverInfo)
             : ValueTask.CompletedTask;
     }
 }

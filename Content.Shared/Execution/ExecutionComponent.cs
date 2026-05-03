@@ -1,6 +1,8 @@
 using Robust.Shared.GameStates;
 
 namespace Content.Shared.Execution;
+//STARLIGHT MODIFIED FILE
+//TODO: Use upstream and modify it accordingly instead
 
 /// <summary>
 /// Added to entities that can be used to execute another target.
@@ -12,7 +14,7 @@ public sealed partial class ExecutionComponent : Component
     /// How long the melee execution duration lasts.
     /// </summary>
     public static float MeleeDoAfterDuration = 5f;
-    
+
     /// <summary>
     /// How long the gun execution duration lasts.
     /// </summary>

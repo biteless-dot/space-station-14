@@ -5,22 +5,14 @@
     - id: ClothingNeckCloakQmElite
     - id: BoxEncryptionKeyCargo
     - id: BoxFolderQmClipboard
-    - id: CargoBountyComputerCircuitboard
-    - id: CargoRequestComputerCircuitboard
-    - id: CargoSaleComputerCircuitboard
-    - id: CargoShuttleConsoleCircuitboard
-    - id: SalvageMagnetMachineCircuitboard
-    - id: SalvageJobBoardComputerCircuitboard
+    - id: BoxQMCircuitboards
+    - id: BoxQMStamps
     - id: CigPackGreen
       prob: 0.50
     - id: ClothingHeadsetAltCargo
     - id: DoorRemoteCargo
-    - id: RubberStampApproved
-    - id: RubberStampDenied
-    - id: RubberStampQm
     - id: AstroNavCartridge
     - id: ClothingHandsKnuckleDustersQM
-    - id: MailTeleporterMachineCircuitboard
     - id: PlushieLance #starlight
     - id: RadioHandheldExpedition #starlight
     - id: ClothingOuterHardsuitLuxmax #starlight
@@ -86,7 +78,7 @@
     - id: ClothingBeltSheathFilled
     - id: ClothingHeadsetAltCommand
     - id: ClothingOuterArmorCaptainCarapace
-    - id: CommsComputerCircuitboard
+    - id: BoxCaptainCircuitboards
     - id: DoorRemoteCustom
     - id: MedalCase
     - id: NukeDisk
@@ -99,6 +91,8 @@
     - id: ClothingEyesGlassesCommand
     - id: ClothingEyesHudCommand
     - id: EncryptionKeyExpedition #starlight
+    - id: SpyglassCaptain #Starlight
+    - id: CommunicationTablet #Starlight
     - id: HeadSkeleton # A skull to accompany your skeleton crew
       conditions:
       - !type:PlayerCountCondition
@@ -138,6 +132,7 @@
     - id: JetpackCaptainFilled
     - id: OxygenTankFilled
     - id: NitrogenTankFilled # Starlight - vox gang
+    - id: CoolingUnit # Starlight
 
 # No laser locker, used when the antique laser is placed in the special display crate
 - type: entity
@@ -185,6 +180,8 @@
     - id: BoxEncryptionKeyAssistant
     - id: BoxEncryptionKeyService
     - id: BoxHeadset
+    - id: BoxHoPCircuitboards
+    - id: BoxHoPStamps
     - id: BoxID
     - id: BoxPDA
     - id: CigarGoldCase
@@ -197,12 +194,6 @@
     - id: ClothingNeckGoldmedal
     - id: DoorRemoteService
     - id: HoPIDCard
-    - id: IDComputerCircuitboard
-    - id: FundingAllocationComputerCircuitboard
-    - id: CargoRequestServiceComputerCircuitboard
-    - id: RubberStampApproved
-    - id: RubberStampDenied
-    - id: RubberStampHop
     - id: WeaponDisabler
     - id: ClothingEyesHudCommand
     - id: BoxFolderHoPClipboard #Starlight Change
@@ -241,11 +232,18 @@
       prob: 0.15
     - id: ClothingBeltChiefEngineerFilled
     - id: ClothingEyesGlassesMeson
-    - id: ClothingHandsGlovesColorYellow
+#    - id: ClothingHandsGlovesColorYellow # Starlight, they spawn with these now.
     - id: ClothingHeadsetAltEngineering
     - id: DoorRemoteEngineering
-    - id: CargoRequestEngineeringComputerCircuitboard
+    - id: BoxCECircuitboards
+    - id: MatBag #FH
+    - id: WeaponGrapplingGun #FH
+    - id: BoxFlare #FH
+    - id: AstroNavCartridge #FH
+    - id: SheetSteel #FH
+    - id: SheetGlass #FH
     - id: RCD
+    - id: RPD # Starlight: RPD
     - id: RCDAmmo
     - id: RubberStampCE
     - id: MetalFoamGrenade
@@ -265,9 +263,10 @@
     - id: ClothingMaskGasAtmos
     - id: ClothingOuterHardsuitEngineeringWhite
     - id: ClothingShoesBootsMagAdv
-    - id: JetpackVoidFilled
+    - id: JetpackVoidEngineerFilled #Starlight edit: CE's custom pack for steal objective
     - id: OxygenTankFilled
     - id: NitrogenTankFilled # Starlight - vox gang
+    - id: CoolingUnit # Starlight
 
 # No hardsuit locker
 - type: entity
@@ -300,32 +299,34 @@
   id: LockerFillChiefMedicalOfficerNoHardsuit
   table: !type:AllSelector
     children:
-    - id: ClothingCloakCmoElite
-    - id: BoxEncryptionKeyMedical
-    - id: ClothingBackpackDuffelSurgeryFilled
-    - id: ClothingCloakCmo
     - id: ClothingEyesHudMedical
-    - id: ClothingHandsGlovesNitrile
-    - id: ClothingHeadHatBeretCmo
-    - id: ClothingHeadsetAltMedical
-    - id: ClothingMaskSterile
-    - id: DoorRemoteMedical
+    - id: ClothingBeltMedicalFilled
     - id: HandheldCrewMonitor
     - id: Hypospray
-    - id: MedicalTechFabCircuitboard
-    - id: CargoRequestMedicalComputerCircuitboard
-    - id: MedkitFilled
-    - id: RubberStampCMO
     - id: MedTekCartridge
-    - id: AutoMenderBurnFilled #Starlight
-    - id: AutoMenderBruteFilled #Starlight
-    - id: CMOLicense #STARLIGHT
-    - id: PrintedDocumentGreenshiftAlert #SL
-      conditions: #SL
-      - !type:GamemodeCondition #SL
-        presets: #SL
-        - Greenshift #SL
-        - Sandbox #SL
+    # Standard command gear
+    - id: RubberStampCMO
+    - id: ClothingHeadsetAltMedical
+    - id: DoorRemoteMedical
+    - id: BoxEncryptionKeyMedical
+    - id: BoxCMOCircuitboards
+    - id: AutoMenderBurnFilled # Starlight start
+    - id: AutoMenderBruteFilled
+    - id: ClothingBackpackDuffelSurgeryFilled
+    - id: ClothingMaskSterile
+    - id: ClothingHandsGlovesNitrile
+    - id: CMOLicense
+    - id: BottleCaseMedicalFilled
+    - id: PenPackMedicalFilled
+    - id: EncryptionKeyMedicalScience # Steal target
+      prob: 0.5
+    - id: PrintedDocumentGreenshiftAlert
+      conditions:
+      - !type:GamemodeCondition
+        presets:
+        - Greenshift
+        - Sandbox
+    - id: JawsOfLifeMed #Starlight end
 
 # Hardsuit table, used for suit storage as well
 - type: entityTable
@@ -336,6 +337,7 @@
     - id: ClothingOuterHardsuitMedical
     - id: OxygenTankFilled
     - id: NitrogenTankFilled # Starlight - vox gang
+    - id: CoolingUnit # Starlight
 
 # No hardsuit locker
 - type: entity
@@ -371,17 +373,14 @@
     - id: ClothingNeckCloakRdElite
     - id: Intellicard
     - id: BoxEncryptionKeyScience
-    - id: CircuitImprinterMachineCircuitboard
+    - id: BoxRDCircuitboards
     - id: ClothingBeltUtilityFilled
     - id: ClothingHeadsetAltScience
     - id: DoorRemoteResearch
     - id: HandTeleporter
-    - id: ProtolatheMachineCircuitboard
-    - id: ResearchComputerCircuitboard
-    - id: CargoRequestScienceComputerCircuitboard
-    - id: StationAiFixerCircuitboard
     - id: RubberStampRd
-    - id: RDDiploma #STARLIGHT
+    - id: EncryptionKeyMedicalScience # Starlight, steal target
+      prob: 0.5 # Starlight
     - id: PrintedDocumentGreenshiftAlert #SL
       conditions: #SL
       - !type:GamemodeCondition #SL
@@ -390,6 +389,7 @@
         - Sandbox #SL
     #region Starlight
     - id: RDDiploma
+    - id: XenobiologyConsoleCameraTagger
     #- id: PaperIonstormBorgs
     #  prob: 0.10 #1/10 rounds will have this paper that can be signed repeatedly for no discernable effect!
     #endregion Starlight
@@ -403,6 +403,7 @@
     - id: ClothingOuterHardsuitRd
     - id: OxygenTankFilled
     - id: NitrogenTankFilled # Starlight - vox gang
+    - id: CoolingUnit # Starlight
 
 # No hardsuit locker
 - type: entity
@@ -435,34 +436,38 @@
   id: LockerFillHeadOfSecurityNoHardsuit
   table: !type:AllSelector
     children:
-    - id: ClothingNeckCloakHosElite
-    - id: WeaponEnergySMG
+    - id: ClothingNeckCloakHosElite # Starlight
+    - id: WeaponEnergySMG # Starlight
+    # - id: WeaponEnergyMagnum # Starlight - Removed, given to det
     - id: BookSpaceLaw
     - id: BoxEncryptionKeySecurity
     - id: CigarGoldCase
       prob: 0.50
     - id: ClothingBeltSecurityFilled
     - id: ClothingEyesGlassesSecurity
-    - id: ClothingEyesHudSecurity
+    - id: ClothingEyesHudSecurity # Starlight
     - id: ClothingHeadsetAltSecurity
-    - id: ClothingMaskNeckGaiter
     - id: ClothingOuterCoatHoSTrench
     - id: ClothingShoesBootsJack
+    - id: FlashlightSeclite
     - id: DoorRemoteSecurity
     - id: HoloprojectorSecurity
     - id: RubberStampHos
-    - id: SecurityTechFabCircuitboard
-    - id: CargoRequestSecurityComputerCircuitboard
+    - id: BoxHoSCircuitboards
     - id: WeaponDisabler
+    - id: WeaponTaser
     - id: WantedListCartridge
     - id: DrinkHosFlask
-    - id: SecurityShuttleConsoleCircuitboard #SL
-    - id: PrintedDocumentGreenshiftAlert #SL
-      conditions: #SL
-      - !type:GamemodeCondition #SL
-        presets: #SL
-        - Greenshift #SL
-        - Sandbox #SL
+    - id: SecurityShuttleConsoleCircuitboard # Starlight start
+    - id: ClothingOuterWinterHoS
+#    - id: ClothingHandsGlovesCombat # Starlight, they spawn with them now.
+    - id: SecureBriefings
+    - id: PrintedDocumentGreenshiftAlert
+      conditions:
+      - !type:GamemodeCondition
+        presets:
+        - Greenshift
+        - Sandbox # Starlight end
 
 # Hardsuit table, used for suit storage as well
 - type: entityTable
@@ -474,6 +479,7 @@
     - id: JetpackSecurityFilled
     - id: OxygenTankFilled
     - id: NitrogenTankFilled # Starlight - vox gang
+    - id: CoolingUnit # Starlight
     - id: ClothingShoesBootsMagSec
 
 # No hardsuit locker
@@ -502,17 +508,24 @@
         - !type:NestedSelector
           tableId: FillHeadOfSecurityHardsuit
 
-- type: entity
-  id: LockerFreezerVaultFilled
-  suffix: Vault, Locked
-  parent: LockerFreezerBase
-  components:
-  - type: AccessReader
-    access: [ [ "Command" ] ]
-  - type: StorageFill
-    contents:
+- type: entityTable
+  id: LockerFillVault
+  table: !type:AllSelector
+    children:
     - id: WeaponRevolverDeckard
     - id: JetpackBlue
     - id: SpaceCash1000
     - id: BeachBall
     - id: BikeHorn
+
+- type: entity
+  id: LockerFreezerVaultFilled
+  suffix: Vault, Filled
+  parent: LockerFreezerBase
+  components:
+  - type: AccessReader
+    access: [ [ "Command" ] ]
+  - type: EntityTableContainerFill
+    containers:
+      entity_storage: !type:NestedSelector
+        tableId: LockerFillVault

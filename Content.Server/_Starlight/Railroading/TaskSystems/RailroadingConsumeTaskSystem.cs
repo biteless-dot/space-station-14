@@ -17,13 +17,7 @@ namespace Content.Server._Starlight.Railroading;
 public sealed partial class RailroadingConsumeTaskSystem : EntitySystem
 {
     [Dependency] private readonly IPrototypeManager _proto = default!;
-    [Dependency] private readonly IPlayerManager _players = default!;
-    [Dependency] private readonly IAdminManager _admins = default!;
-    [Dependency] private readonly ISharedAdminLogManager _adminLogger = default!;
-    [Dependency] private readonly EuiManager _euiManager = default!;
-    [Dependency] private readonly AlertsSystem _alerts = default!;
     [Dependency] private readonly RailroadingSystem _railroading = default!;
-    [Dependency] private readonly StarlightEntitySystem _entitySystem = default!;
     public override void Initialize()
     {
         base.Initialize();
@@ -51,9 +45,6 @@ public sealed partial class RailroadingConsumeTaskSystem : EntitySystem
 
     private void OnCollectObjectiveInfo(Entity<RailroadConsumeTaskComponent> ent, ref CollectObjectiveInfoEvent args)
     {
-        if (!TryComp<RailroadCardComponent>(ent.Owner, out var card))
-            return;
-
         var prototype = _proto.Index(ent.Comp.Objects.FirstOrDefault());
         args.Objectives.Add(new ObjectiveInfo
         {
@@ -70,6 +61,6 @@ public sealed partial class RailroadingConsumeTaskSystem : EntitySystem
         args.IsCompleted = ent.Comp.IsCompleted;
     }
 
-    private void OnConsumeTaskPicked(Entity<RailroadConsumeTaskComponent> ent, ref RailroadingCardChosenEvent args) 
+    private void OnConsumeTaskPicked(Entity<RailroadConsumeTaskComponent> ent, ref RailroadingCardChosenEvent args)
         => EnsureComp<RailroadConsumeWatcherComponent>(args.Subject.Owner);
 }

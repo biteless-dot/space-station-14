@@ -1,7 +1,7 @@
 ﻿- type: entity
   name: basic slime
   id: BaseMobAdultSlimes
-  parent: [ SimpleMobBase, MobCombat ]
+  parent: [ SimpleMobBase, MobCombat ] #starlight Nubody will not pass.
   abstract: true
   description: It looks so much like jelly. I wonder what it tastes like?
   components:
@@ -67,7 +67,10 @@
     damageContainer: Biological
     damageModifierSet: Slime
   - type: Bloodstream
-    bloodReagent: Slime
+    bloodReferenceSolution:
+      reagents:
+      - ReagentId: Slime
+        Quantity: 150
     bloodlossDamage:
       types:
         Bloodloss:
@@ -88,22 +91,23 @@
     - reagents: [ Water, SpaceCleaner ]
       methods: [ Touch ]
       effects:
-      - !type:WashCreamPieReaction
+      - !type:WashCreamPie
     - reagents: [ Water ]
       methods: [ Touch ]
       effects:
       - !type:HealthChange
-        scaleByQuantity: true
         damage:
           types:
-            Heat: 0.15
+            Heat: 0.05 #Same as slime species
       - !type:PopupMessage
         type: Local
         messages: [ "slime-hurt-by-water-popup" ]
         probability: 0.25
+  # Starlight - start
   - type: Body
     prototype: Slimes
     requiredLegs: 1
+  # Starlight - end
   - type: MeleeWeapon
     altDisarm: false
     soundHit:

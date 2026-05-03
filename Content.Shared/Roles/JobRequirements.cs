@@ -10,35 +10,65 @@ namespace Content.Shared.Roles;
 
 public static class JobRequirements
 {
+    /// <summary>
+    /// Checks if the requirements of the job are met by the provided play-times.
+    /// </summary>
+    /// <param name="job"> The job to test. </param>
+    /// <param name="playTimes"> The playtimes used for the check. </param>
+    /// <param name="reason"> If the requirements were not met, details are provided here. </param>
+    /// <returns>Returns true if all requirements were met or there were no requirements.</returns>
     public static bool TryRequirementsMet(
         JobPrototype job,
         ICommonSession? player,
         IReadOnlyDictionary<string, TimeSpan>? playTimes,
-        [NotNullWhen(false)] out FormattedMessage? reason,
+        out List<FormattedMessage> reason, // Starlight: List
         IEntityManager entManager,
         IPrototypeManager protoManager,
         HumanoidCharacterProfile? profile)
     {
         var sys = entManager.System<SharedRoleSystem>();
-        var requirements = sys.GetJobRequirement(job);
-        reason = null;
+        var requirements = sys.GetRoleRequirements(job);
+        return TryRequirementsMet(requirements, player, playTimes, out reason, entManager, protoManager, profile);
+    }
+
+    /// <summary>
+    /// Checks if the list of requirements are met by the provided play-times.
+    /// </summary>
+    /// <param name="requirements"> The requirements to test. </param>
+    /// <param name="playTimes"> The playtimes used for the check. </param>
+    /// <param name="reason"> If the requirements were not met, details are provided here. </param>
+    /// <returns>Returns true if all requirements were met or there were no requirements.</returns>
+    public static bool TryRequirementsMet(
+        HashSet<JobRequirement>? requirements,
+        ICommonSession? player,
+        IReadOnlyDictionary<string, TimeSpan>? playTimes,
+        out List<FormattedMessage> reasons, // Starlight
+        IEntityManager entManager,
+        IPrototypeManager protoManager,
+        HumanoidCharacterProfile? profile)
+    {
+        reasons = new List<FormattedMessage>(); // Starlight
         if (requirements == null)
             return true;
 
+        var success = true; // Starlight
         foreach (var requirement in requirements)
         {
-            if (!requirement.Check(entManager, player, protoManager, profile, playTimes, out reason))
-                return false;
+            // Starlight BEGIN: Accumulate reason texts
+            if (!requirement.Check(entManager, player, protoManager, profile, playTimes, out var reason))
+                success = false;
+            reasons.Add(reason);
+            // Starlight END
         }
 
-        return true;
+        return success; // Starlight
     }
 
     public static bool TryRequirementsMet(
         ProtoId<JobPrototype> job,
         ICommonSession? player,
         IReadOnlyDictionary<string, TimeSpan>? playTimes,
-        [NotNullWhen(false)] out FormattedMessage? reason,
+        out List<FormattedMessage> reason, // Starlight: List
         IEntityManager entManager,
         IPrototypeManager protoManager,
         HumanoidCharacterProfile? profile)
@@ -46,7 +76,7 @@ public static class JobRequirements
         if (protoManager.TryIndex(job, out var jobProto))
             return TryRequirementsMet(jobProto, player, playTimes, out reason, entManager, protoManager, profile);
 
-        reason = FormattedMessage.FromUnformatted("Failed to get job prototype");
+        reason = new() { FormattedMessage.FromUnformatted("Failed to get job prototype") }; // Starlight: List
         return false;
     }
 }
@@ -67,5 +97,5 @@ public abstract partial class JobRequirement
         IPrototypeManager protoManager,
         HumanoidCharacterProfile? profile,
         IReadOnlyDictionary<string, TimeSpan>? playTimes,
-        [NotNullWhen(false)] out FormattedMessage? reason);
+        out FormattedMessage reason); // Starlight: Always return reason
 }

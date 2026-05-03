@@ -6,7 +6,7 @@
   requirements:
     - !type:DepartmentTimeRequirement
       department: Medical
-      time: 18000 #5 hrs
+      time: 5h
   startingGear: ChemistGear
   icon: "JobIconChemist"
   supervisors: job-supervisors-cmo
@@ -23,14 +23,11 @@
 - type: startingGear
   id: ChemistGear
   equipment:
-    id: ChemistryPDA
+    # id: ChemistryPDA #Starlight
     ears: ClothingHeadsetMedical
-    belt: ChemBag
-    pocket1: HandLabeler
-    eyes: ClothingEyesGlassesChemical
-  #storage:
-    #back:
-    #- Stuff
+#    belt: ChemBag # Starlight start
+#    pocket1: HandLabeler
+#    eyes: ClothingEyesGlassesChemical # Starlight end
 
 - type: chameleonOutfit
   id: ChemistChameleonOutfit

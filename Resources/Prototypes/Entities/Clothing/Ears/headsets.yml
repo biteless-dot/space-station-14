@@ -31,9 +31,12 @@
   parent: ClothingHeadset
   id: ClothingHeadsetAssistant
   name: assistant headset
+  description: A headset used by assistants. # Starlight
   components:
   - type: Sprite
     sprite: Clothing/Ears/Headsets/service.rsi
+  - type: StealTarget # Starlight
+    stealGroup: AssistantHeadsetsCollection # Starlight. Cursed. Incredibly cursed.
 
 - type: entity
   parent: ClothingHeadset
@@ -55,7 +58,7 @@
   parent: ClothingHeadsetCargo
   id: ClothingHeadsetMining
   name: mining headset
-  description: Headset used by shaft miners.
+  description: Headset used by mining specialists. # Starlight rename to mining specialists
   components:
   - type: Sprite
     sprite: Clothing/Ears/Headsets/mining.rsi
@@ -71,8 +74,8 @@
   - type: ContainerFill
     containers:
       key_slots:
-      - EncryptionKeyExpedition # Starlight
-      - EncryptionKeyCargo
+      - EncryptionKeySalvage # Starlight
+#      - EncryptionKeyCargo # Starlight
       - EncryptionKeyCommand
       - EncryptionKeyCommon
   - type: RadioChime
@@ -245,7 +248,7 @@
       path: /Audio/_Starlight/Effects/Radio/rd.ogg
 
 - type: entity
-  parent: [ClothingHeadset, BaseSecurityLawyerContraband]
+  parent: [ClothingHeadset, BaseSecurityInternalAffairsContraband] # Starlight
   id: ClothingHeadsetSecurity
   name: security headset
   description: This is used by your elite security force.
@@ -266,14 +269,14 @@
 - type: entity
   parent: [ClothingHeadset, BaseSecurityContraband]
   id: ClothingHeadsetBrigmedic
-  name: brigmedic headset
+  name: medical security headset # Starlight
   description: A headset that helps to hear the death cries.
   components:
   - type: ContainerFill
     containers:
       key_slots:
-      - EncryptionKeyMedical
-      - EncryptionKeySecurity
+      - EncryptionKeyMedicalSecurity # Starlight-edit: Make security channel default.
+#      - EncryptionKeyMedical # Starlight
       - EncryptionKeyCommon
   - type: Sprite
     sprite: Clothing/Ears/Headsets/brigmedic.rsi
@@ -323,8 +326,21 @@
     - type: ContainerFill
       containers:
         key_slots:
-        - EncryptionKeyStationMaster
+        - EncryptionKeyWizardMasterUnremovable # Starlight
     - type: Sprite
       sprite: Clothing/Ears/Headsets/wizard.rsi
     - type: Clothing
       sprite: Clothing/Ears/Headsets/wizard.rsi
+
+- type: entity
+  parent: [ClothingHeadset, BaseMajorContraband]
+  id: ClothingHeadsetNinja
+  name: green headset
+  description: Who could refuse to wear this stylish black and green headset?
+  components:
+  - type: Sprite
+    sprite: Clothing/Ears/Headsets/ninja.rsi
+  - type: Clothing
+    sprite: Clothing/Ears/Headsets/ninja.rsi
+  - type: EmpResistance
+    strengthMultiplier: 0

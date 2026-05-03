@@ -105,9 +105,10 @@
         variation: 0.250
   - type: AltUseToggle
   - type: ComponentToggler
-    components: 
+    components:
     - type: MagnetPickup
       range: 2
+      requiresEquipping: false
       slotFlags: 0
   - type: Dumpable
     # Starlight Edit End

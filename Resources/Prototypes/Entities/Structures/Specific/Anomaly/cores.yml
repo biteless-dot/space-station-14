@@ -43,7 +43,7 @@
     sprite: Structures/Specific/Anomalies/Cores/pyro_core.rsi
   - type: PointLight
     radius: 1.5
-    energy: 1.5
+    energy: 2.7
     color: "#E25822"
     castShadows: false
   - type: IgnitionSource
@@ -72,7 +72,7 @@
     sprite: Structures/Specific/Anomalies/Cores/ice_core.rsi
   - type: PointLight
     radius: 1.5
-    energy: 1.5
+    energy: 2.7
     color: "#befaff"
     castShadows: false
 
@@ -170,6 +170,9 @@
     energy: 2.0
     color: "#793a80"
     castShadows: false
+  - type: Tag # Starlight
+    tags:
+      - AnomalyCoreShadow
 
 - type: entity
   parent: BaseAnomalyCore
@@ -223,7 +226,7 @@
     sprite: Structures/Specific/Anomalies/Cores/pyro_core.rsi
   - type: PointLight
     radius: 1.5
-    energy: 1.5
+    energy: 2.7
     color: "#fca3c0"
     castShadows: false
 
@@ -249,7 +252,7 @@
     sprite: Structures/Specific/Anomalies/Cores/ice_core.rsi
   - type: PointLight
     radius: 1.5
-    energy: 1.5
+    energy: 2.7
     color: "#befaff"
     castShadows: false
 
@@ -266,7 +269,6 @@
     energy: 3.5
     color: "#cb5b7e"
     castShadows: false
-
 - type: entity
   parent: BaseAnomalyInertCore
   id: AnomalyCoreRockInert

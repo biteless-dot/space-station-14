@@ -1,3 +1,6 @@
+using Content.Shared._Starlight.Light; // Starlight
+using Content.Shared._Starlight.Railroading; // Starlight
+using Content.Shared._Starlight.Shadekin; // Starlight
 using Content.Shared.Audio;
 using Content.Shared.Damage;
 using Content.Shared.Damage.Components;
@@ -7,6 +10,7 @@ using Content.Shared.DeviceLinking.Events;
 using Content.Shared.DeviceNetwork;
 using Content.Shared.DeviceNetwork.Events;
 using Content.Shared.DoAfter;
+using Content.Shared.Emp;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Interaction;
 using Content.Shared.Light.Components;
@@ -52,6 +56,18 @@ public abstract class SharedPoweredLightSystem : EntitySystem
         SubscribeLocalEvent<PoweredLightComponent, PowerChangedEvent>(OnPowerChanged);
         SubscribeLocalEvent<PoweredLightComponent, PoweredLightDoAfterEvent>(OnDoAfter);
         SubscribeLocalEvent<PoweredLightComponent, DamageChangedEvent>(HandleLightDamaged);
+        SubscribeLocalEvent<PoweredLightComponent, EmpPulseEvent>(OnEmpPulse);
+
+        SubscribeLocalEvent<AlertLevelDimmedLightComponent, GetDimmedLightLevelEvent>(OnGetDimmedLightLevel); // Starlight
+    }
+
+    /// <summary>
+    /// STARLIGHT: Handle light dimming during higher alert levels.
+    /// </summary>
+    private void OnGetDimmedLightLevel(EntityUid uid, AlertLevelDimmedLightComponent component, GetDimmedLightLevelEvent args)
+    {
+        args.LightEnergy *= component.LightEnergyMultiplier;
+        args.PowerUse *= component.LightEnergyMultiplier;
     }
 
     private void OnInit(EntityUid uid, PoweredLightComponent light, ComponentInit args)
@@ -230,34 +246,26 @@ public abstract class SharedPoweredLightSystem : EntitySystem
     /// <summary>
     ///     Try to break bulb inside light fixture
     /// </summary>
-    public bool TryDestroyBulb(EntityUid uid, PoweredLightComponent? light = null)
+    public bool TryDestroyBulb(EntityUid uid, PoweredLightComponent? light = null, EntityUid? user = null)
     {
         if (!Resolve(uid, ref light, false))
             return false;
 
-        // if we aren't mapinited,
-        // just null the spawned bulb
-        if (LifeStage(uid) < EntityLifeStage.MapInitialized)
-        {
-            light.HasLampOnSpawn = null;
-            return true;
-        }
-
         // check bulb state
         var bulbUid = GetBulb(uid, light);
-        if (bulbUid == null || !EntityManager.TryGetComponent(bulbUid.Value, out LightBulbComponent? lightBulb))
+        if (bulbUid == null || !TryComp<LightBulbComponent>(bulbUid.Value, out var lightBulb))
             return false;
         if (lightBulb.State == LightBulbState.Broken)
             return false;
 
         // break it
         _bulbSystem.SetState(bulbUid.Value, LightBulbState.Broken, lightBulb);
-        _bulbSystem.PlayBreakSound(bulbUid.Value, lightBulb);
+        _bulbSystem.PlayBreakSound(bulbUid.Value, lightBulb, user);
         UpdateLight(uid, light);
         return true;
     }
 
-    protected void UpdateLight(EntityUid uid,
+    public void UpdateLight(EntityUid uid, // Starlight: public
         PoweredLightComponent? light = null,
         SharedApcPowerReceiverComponent? powerReceiver = null,
         AppearanceComponent? appearance = null,
@@ -290,12 +298,28 @@ public abstract class SharedPoweredLightSystem : EntitySystem
             return;
         }
 
+        // Starlight BEGIN: Light dimming
+        var lightEnergy = lightBulb.LightEnergy;
+        var lightRadius = lightBulb.LightRadius;
+        var powerUse = lightBulb.PowerUse;
+
+        if (lightBulb.Dimmable)
+        {
+            var lightLevelEv = new GetDimmedLightLevelEvent(lightEnergy, lightRadius, powerUse);
+            RaiseLocalEvent(uid, lightLevelEv);
+
+            lightEnergy = lightLevelEv.LightEnergy;
+            lightRadius = lightBulb.LightRadius;
+            powerUse = (int) Math.Ceiling((double) lightBulb.PowerUse);
+        }
+        // Starlight END
+
         switch (lightBulb.State)
         {
             case LightBulbState.Normal:
-                if (powerReceiver.Powered && light.On)
+                if (powerReceiver.Powered && light.On && lightEnergy > 0)
                 {
-                    SetLight(uid, true, lightBulb.Color, light, lightBulb.LightRadius, lightBulb.LightEnergy, lightBulb.LightSoftness);
+                    SetLight(uid, true, lightBulb.Color, light, lightRadius, lightEnergy, lightBulb.LightSoftness, HasComp<DarkLightComponent>(bulbUid.Value)); // Starlight
                     _appearance.SetData(uid, PoweredLightVisuals.BulbState, PoweredLightState.On, appearance);
                     var time = GameTiming.CurTime;
                     if (time > light.LastThunk + ThunkDelay)
@@ -321,19 +345,25 @@ public abstract class SharedPoweredLightSystem : EntitySystem
                 break;
         }
 
-        powerReceiver.Load = (light.On && lightBulb.State == LightBulbState.Normal) ? lightBulb.PowerUse : 0;
+        powerReceiver.Load = (light.On && lightBulb.State == LightBulbState.Normal) ? powerUse : 0; // Starlight
     }
 
     /// <summary>
     ///     Destroy the light bulb if the light took any damage.
     /// </summary>
+    /// <remarks>
+    ///     TODO: This should be an IThresholdBehaviour once DestructibleSystem is predicted.
+    /// </remarks>
     public void HandleLightDamaged(EntityUid uid, PoweredLightComponent component, DamageChangedEvent args)
     {
+        if (GameTiming.ApplyingState) // The destruction is already networked on its own.
+            return;
+
         // Was it being repaired, or did it take damage?
         if (args.DamageIncreased)
         {
-            // Eventually, this logic should all be done by this (or some other) system, not a component.
-            TryDestroyBulb(uid, component);
+            if (TryDestroyBulb(uid, component, args.Origin) && args.Origin is not null)
+                RaiseLocalEvent(args.Origin.Value, new OnLightBreakEvent(uid)); // SL
         }
     }
 
@@ -346,6 +376,12 @@ public abstract class SharedPoweredLightSystem : EntitySystem
             return;
 
         UpdateLight(uid, component);
+    }
+
+    private void OnEmpPulse(EntityUid uid, PoweredLightComponent component, ref EmpPulseEvent args)
+    {
+        if (TryDestroyBulb(uid, component))
+            args.Affected = true;
     }
 
     public void ToggleBlinkingLight(EntityUid uid, PoweredLightComponent light, bool isNowBlinking)
@@ -362,7 +398,7 @@ public abstract class SharedPoweredLightSystem : EntitySystem
         _appearance.SetData(uid, PoweredLightVisuals.Blinking, isNowBlinking, appearance);
     }
 
-    private void SetLight(EntityUid uid, bool value, Color? color = null, PoweredLightComponent? light = null, float? radius = null, float? energy = null, float? softness = null)
+    private void SetLight(EntityUid uid, bool value, Color? color = null, PoweredLightComponent? light = null, float? radius = null, float? energy = null, float? softness = null, bool darklight = false)
     {
         if (!Resolve(uid, ref light))
             return;
@@ -388,6 +424,13 @@ public abstract class SharedPoweredLightSystem : EntitySystem
             if (softness != null)
                 _pointLight.SetSoftness(uid, (float)softness, pointLight);
         }
+
+        // Starlight - Start
+        if (darklight)
+            EnsureComp<DarkLightComponent>(uid);
+        else
+            RemComp<DarkLightComponent>(uid);
+        // Starlight - End
 
         // light bulbs burn your hands!
         if (TryComp<DamageOnInteractComponent>(uid, out var damageOnInteractComp))

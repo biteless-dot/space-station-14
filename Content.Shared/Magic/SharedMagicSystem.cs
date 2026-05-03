@@ -1,15 +1,11 @@
-using System.Linq;
 using System.Numerics;
-using Content.Shared._Starlight.Language;
-using Content.Shared._Starlight.Language.Components;
-using Content.Shared._Starlight.Language.Systems;
-using Content.Shared._Starlight.Magic.Events;
-using Content.Shared.Body.Components;
-using Content.Shared.Body.Systems;
+using Content.Shared.Charges.Components;
+using Content.Shared.Charges.Systems;
 using Content.Shared.Coordinates.Helpers;
-using Content.Shared.Damage;
 using Content.Shared.Doors.Components;
 using Content.Shared.Doors.Systems;
+using Content.Shared.Examine;
+using Content.Shared.Gibbing;
 using Content.Shared.Hands.Components;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Interaction;
@@ -19,11 +15,9 @@ using Content.Shared.Magic.Components;
 using Content.Shared.Magic.Events;
 using Content.Shared.Maps;
 using Content.Shared.Mind;
-using Content.Shared.Ninja.Systems;
 using Content.Shared.Physics;
 using Content.Shared.Popups;
 using Content.Shared.Speech.Muting;
-using Content.Shared.Station;
 using Content.Shared.Storage;
 using Content.Shared.Stunnable;
 using Content.Shared.Tag;
@@ -38,6 +32,18 @@ using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Serialization.Manager;
 using Robust.Shared.Spawners;
+
+#region Starlight
+using System.Linq;
+using Content.Shared._Starlight.Language;
+using Content.Shared._Starlight.Language.Components;
+using Content.Shared._Starlight.Language.Systems;
+using Content.Shared._Starlight.Magic.Events;
+using Content.Shared.Damage;
+using Content.Shared.Damage.Systems;
+using Content.Shared.Ninja.Systems;
+using Content.Shared.Station;
+#endregion Starlight
 
 namespace Content.Shared.Magic;
 
@@ -58,7 +64,7 @@ public abstract class SharedMagicSystem : EntitySystem
     [Dependency] private readonly SharedPhysicsSystem _physics = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
     [Dependency] private readonly INetManager _net = default!;
-    [Dependency] private readonly SharedBodySystem _body = default!;
+    [Dependency] private readonly GibbingSystem _gibbing = default!;
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
     [Dependency] private readonly SharedDoorSystem _door = default!;
     [Dependency] private readonly InventorySystem _inventory = default!;
@@ -71,6 +77,9 @@ public abstract class SharedMagicSystem : EntitySystem
     [Dependency] private readonly SharedMindSystem _mind = default!;
     [Dependency] private readonly SharedStunSystem _stun = default!;
     [Dependency] private readonly TurfSystem _turf = default!;
+    [Dependency] private readonly SharedChargesSystem _charges = default!;
+    [Dependency] private readonly ExamineSystemShared _examine= default!;
+
     #region Starlight
     [Dependency] private readonly DamageableSystem _damageable = default!;
     [Dependency] private readonly SharedStationSystem _station = default!;
@@ -89,6 +98,7 @@ public abstract class SharedMagicSystem : EntitySystem
         SubscribeLocalEvent<TeleportSpellEvent>(OnTeleportSpell);
         SubscribeLocalEvent<WorldSpawnSpellEvent>(OnWorldSpawn);
         SubscribeLocalEvent<ProjectileSpellEvent>(OnProjectileSpell);
+        SubscribeLocalEvent<MultiProjectileSpellEvent>(OnMultiProjectileSpell); // Starlight: Multi-projectile spread spell
         SubscribeLocalEvent<ChangeComponentsSpellEvent>(OnChangeComponentsSpell);
         SubscribeLocalEvent<SmiteSpellEvent>(OnSmiteSpell);
         SubscribeLocalEvent<KnockSpellEvent>(OnKnockSpell);
@@ -297,7 +307,50 @@ public abstract class SharedMagicSystem : EntitySystem
         var ent = Spawn(ev.Prototype, fromMap);
         var direction = _transform.ToMapCoordinates(toCoords).Position -
                          fromMap.Position;
-        _gunSystem.ShootProjectile(ent, direction, userVelocity, ev.Performer, ev.Performer);
+        _gunSystem.ShootProjectile(ent, direction, userVelocity, ev.Performer, ev.Performer, 25f);
+    }
+
+    /// <summary>
+    /// Starlight: Fires multiple projectiles in a spread pattern.
+    /// This manually spawns and fires each projectile with an angle offset from the center direction.
+    /// We can't use ProjectileSpreadComponent because it only works in the gun system's ammo handling,
+    /// not with the magic system's direct ShootProjectile calls.
+    /// </summary>
+    private void OnMultiProjectileSpell(MultiProjectileSpellEvent ev)
+    {
+        if (ev.Handled || !PassesSpellPrerequisites(ev.Action, ev.Performer) || !_net.IsServer)
+            return;
+
+        ev.Handled = true;
+
+        var xform = Transform(ev.Performer);
+        var fromCoords = xform.Coordinates;
+        var toCoords = ev.Target;
+        var userVelocity = _physics.GetMapLinearVelocity(ev.Performer);
+
+        // Calculate base direction to target
+        var fromMap = _transform.ToMapCoordinates(fromCoords);
+        var toMap = _transform.ToMapCoordinates(toCoords);
+        var baseDirection = toMap.Position - fromMap.Position;
+        var baseAngle = baseDirection.ToWorldAngle();
+
+        // Convert spread from degrees to radians
+        var spreadRadians = MathHelper.DegreesToRadians(ev.SpreadDegrees);
+
+        // Calculate angle increment between projectiles
+        // For even count, we spread evenly around center
+        var angleIncrement = ev.ProjectileCount > 1 ? spreadRadians / (ev.ProjectileCount - 1) : 0f;
+        var startAngle = baseAngle - spreadRadians / 2f;
+
+        // Spawn and fire each projectile
+        for (var i = 0; i < ev.ProjectileCount; i++)
+        {
+            var projectileAngle = startAngle + (angleIncrement * i);
+            var projectileDirection = projectileAngle.ToWorldVec();
+
+            var ent = Spawn(ev.Prototype, fromMap);
+            _gunSystem.ShootProjectile(ent, projectileDirection, userVelocity, ev.Performer, ev.Performer);
+        }
     }
     // End Projectile Spells
     #endregion
@@ -404,11 +457,7 @@ public abstract class SharedMagicSystem : EntitySystem
         var impulseVector = direction * 10000;
 
         _physics.ApplyLinearImpulse(ev.Target, impulseVector);
-
-        if (!TryComp<BodyComponent>(ev.Target, out var body))
-            return;
-
-        //_body.GibBody(ev.Target, true, body); //starlight commented out
+        //_gibbing.Gib(ev.Target); //starlight commented out
         //starlight start
         //apply damage to the target
         _damageable.TryChangeDamage(ev.Target, ev.Damage, true); //ignore resistances
@@ -419,22 +468,30 @@ public abstract class SharedMagicSystem : EntitySystem
     #endregion
     #region Knock Spells
     /// <summary>
-    /// Opens all doors and locks within range
+    /// Opens all doors and locks within range.
     /// </summary>
-    /// <param name="args"></param>
     private void OnKnockSpell(KnockSpellEvent args)
     {
         if (args.Handled || !PassesSpellPrerequisites(args.Action, args.Performer))
             return;
 
         args.Handled = true;
+        Knock(args.Performer, args.Range);
+    }
 
-        var transform = Transform(args.Performer);
+    /// <summary>
+    /// Opens all doors and locks within range.
+    /// </summary>
+    /// <param name="performer">Performer of spell. </param>
+    /// <param name="range">Radius around <see cref="performer"/> in which all doors and locks should be opened.</param>
+    public void Knock(EntityUid performer, float range)
+    {
+        var transform = Transform(performer);
 
         // Look for doors and lockers, and don't open/unlock them if they're already opened/unlocked.
-        foreach (var target in _lookup.GetEntitiesInRange(_transform.GetMapCoordinates(args.Performer, transform), args.Range, flags: LookupFlags.Dynamic | LookupFlags.Static))
+        foreach (var target in _lookup.GetEntitiesInRange(_transform.GetMapCoordinates(performer, transform), range, flags: LookupFlags.Dynamic | LookupFlags.Static))
         {
-            if (!_interaction.InRangeUnobstructed(args.Performer, target, range: 0, collisionMask: CollisionGroup.Opaque))
+            if (!_examine.InRangeUnOccluded(performer, target, range: 0))
                 continue;
 
             if (TryComp<DoorBoltComponent>(target, out var doorBoltComp) && doorBoltComp.BoltsDown)
@@ -444,7 +501,7 @@ public abstract class SharedMagicSystem : EntitySystem
                 _door.StartOpening(target);
 
             if (TryComp<LockComponent>(target, out var lockComp) && lockComp.Locked)
-                _lock.Unlock(target, args.Performer, lockComp);
+                _lock.Unlock(target, performer, lockComp);
         }
     }
     // End Knock Spells
@@ -467,10 +524,13 @@ public abstract class SharedMagicSystem : EntitySystem
 
         ev.Handled = true;
 
-        if (wand == null || !TryComp<BasicEntityAmmoProviderComponent>(wand, out var basicAmmoComp) || basicAmmoComp.Count == null)
+        if (wand == null)
             return;
 
-        _gunSystem.UpdateBasicEntityAmmoCount(wand.Value, basicAmmoComp.Count.Value + ev.Charge, basicAmmoComp);
+        if (TryComp<BasicEntityAmmoProviderComponent>(wand, out var basicAmmoComp) && basicAmmoComp.Count != null)
+            _gunSystem.UpdateBasicEntityAmmoCount((wand.Value, basicAmmoComp), basicAmmoComp.Count.Value + ev.Charge);
+        else if (TryComp<LimitedChargesComponent>(wand, out var charges))
+            _charges.AddCharges((wand.Value, charges), ev.Charge);
     }
     // End Charge Spells
     #endregion
@@ -545,12 +605,16 @@ public abstract class SharedMagicSystem : EntitySystem
         var user = ev.Performer;
 
         // try to put item in hand, otherwise it goes on the ground
-        var star = Spawn(ev.Spawned, Transform(user).Coordinates);
-        if (IsClientSide(star))
-            Del(star);//event has a tendency to produce client-sided cheese... this cleans those up...
+        var spawnedEntity = PredictedSpawnAtPosition(ev.Spawned, Transform(user).Coordinates);
+
+        var afterEvent = new AfterSpawnItemInHandEvent { Entity = spawnedEntity, Performer = user };
+        RaiseLocalEvent(ev.Action, afterEvent);
+
+        var result = _hands.TryPickupAnyHand(user, spawnedEntity);
+        if(!result && ev.RequiresFreeHand)
+            Del(spawnedEntity); // abort!
         else
-            _hands.TryPickupAnyHand(user, star);
-        ev.Handled = true;
+            ev.Handled = true;
     }
 
     private void OnTowerOfBabel(TowerOfBabelEvent ev)

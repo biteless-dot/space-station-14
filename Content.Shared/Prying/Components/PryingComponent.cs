@@ -36,6 +36,21 @@ public sealed partial class PryingComponent : Component
     /// </summary>
     [DataField]
     public bool Enabled = true;
+
+    #region Starlight
+
+    /// <summary>
+    /// Whether to play the use sound when prying is started.
+    /// </summary>
+    [DataField]
+    public bool PlaySoundOnDoafter = false;
+
+    /// <summary>
+    /// What sound to play when prying is started.
+    /// </summary>
+    [DataField]
+    public SoundSpecifier useSoundOnDoafter = new SoundPathSpecifier("/Audio/_Starlight/Machines/airlock_pry.ogg");
+    #endregion Starlight
 }
 
 /// <summary>
@@ -77,6 +92,15 @@ public readonly record struct PriedEvent(EntityUid User)
     public readonly EntityUid User = User;
 }
 
+// Starlight-start
+[ByRefEvent]
+public readonly record struct UserPriedDoorEvent(EntityUid Door, bool Opened)
+{
+    public readonly EntityUid Door = Door;
+    public readonly bool Opened = Opened;
+}
+// Starlight-end
+
 /// <summary>
 /// Raised to determine how long the door's pry time should be modified by.
 /// Multiply PryTimeModifier by the desired amount.
@@ -86,7 +110,7 @@ public record struct GetPryTimeModifierEvent
 {
     public readonly EntityUid User;
     public float PryTimeModifier = 1.0f;
-    public float BaseTime = 5.0f;
+    public TimeSpan BaseTime = TimeSpan.FromSeconds(5);
 
     public GetPryTimeModifierEvent(EntityUid user)
     {

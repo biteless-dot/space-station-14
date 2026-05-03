@@ -1,14 +1,14 @@
 using System.Numerics;
-using Content.Server.Body.Systems;
 using Content.Shared.Buckle;
 using Content.Shared.ActionBlocker;
 using Content.Shared.Body.Components;
-using Content.Shared.Body.Part;
 using Content.Shared.Buckle.Components;
 using Content.Shared.Hands.Components;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Standing;
 using Robust.Shared.GameObjects;
+using Content.Shared._Starlight.Medical.Body.Part;
+using Content.Server._Starlight.Medical.Body.Systems;
 
 namespace Content.IntegrationTests.Tests.Buckle
 {
@@ -31,6 +31,8 @@ namespace Content.IntegrationTests.Tests.Buckle
   - type: Hands
   - type: ComplexInteraction
   - type: InputMover
+  - type: Physics
+    bodyType: KinematicController
   - type: Body
     prototype: Human
   - type: StandingState
@@ -315,10 +317,10 @@ namespace Content.IntegrationTests.Tests.Buckle
                 // Still buckled
                 Assert.That(buckle.Buckled);
 
-                // Now with no item in any hand
+                // Still with items in hand
                 foreach (var hand in hands.Hands.Keys)
                 {
-                    Assert.That(handsSys.GetHeldItem((human, hands), hand), Is.Null);
+                    Assert.That(handsSys.GetHeldItem((human, hands), hand), Is.Not.Null);
                 }
 
                 buckleSystem.Unbuckle(human, human);

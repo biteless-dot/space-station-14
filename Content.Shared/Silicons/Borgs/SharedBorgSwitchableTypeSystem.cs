@@ -8,6 +8,7 @@ using Content.Shared.Movement.Components;
 using Content.Shared.Silicons.Borgs.Components;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
+using Content.Shared._NullLink; // Starlight-edit
 
 namespace Content.Shared.Silicons.Borgs;
 
@@ -23,7 +24,7 @@ public abstract class SharedBorgSwitchableTypeSystem : EntitySystem
     [Dependency] private readonly SharedUserInterfaceSystem _userInterface = default!;
     [Dependency] protected readonly IPrototypeManager Prototypes = default!;
     [Dependency] private readonly InteractionPopupSystem _interactionPopup = default!;
-    [Dependency] private readonly ISharedPlayersRoleManager _playerRoles = default!; // Starlight-edit
+    [Dependency] private readonly ISharedNullLinkPlayerResourcesManager _playerResources = default!; // Starlight-edit
 
     public static readonly EntProtoId ActionId = "ActionSelectBorgType";
 
@@ -52,7 +53,9 @@ public abstract class SharedBorgSwitchableTypeSystem : EntitySystem
         Dirty(ent);
 
         if (ent.Comp.SelectedBorgType != null)
+        {
             SelectBorgModule(ent, ent.Comp.SelectedBorgType.Value);
+        }
     }
 
     private void OnShutdown(Entity<BorgSwitchableTypeComponent> ent, ref ComponentShutdown args)
@@ -82,11 +85,11 @@ public abstract class SharedBorgSwitchableTypeSystem : EntitySystem
         if (TryComp<BorgSwitchableSubtypeComponent>(ent, out var subtypeComp) && subtypeComp.BorgSubtype != null
             && Prototypes.Index(subtypeComp.BorgSubtype.Value).TryGetComponent<BorgSubtypeDefinitionComponent>(out var subtype) && subtype.Price is not null and > 0)
         {
-            if (_playerRoles.GetPlayerData(ent.Owner) is not PlayerData playerData
-                || playerData.Balance < subtype.Price)
+            if (!_playerResources.TryGetResource(ent.Owner, "credits", out var balance)
+                || balance < subtype.Price)
                 return;
 
-            playerData.Balance -= subtype.Price.Value;
+            _playerResources.TryUpdateResource(ent.Owner, "credits", -subtype.Price.Value);
         }
         // Starlight-end
 
@@ -143,6 +146,7 @@ public abstract class SharedBorgSwitchableTypeSystem : EntitySystem
         // Starlight-start: Movement sprite state
         if (!(TryComp<BorgSwitchableSubtypeComponent>(entity, out var subtype) && subtype.BorgSubtype != null))
         {
+        // Starlight-end: Movement sprite state
             if (prototype.SpriteBodyMovementState is { } movementState)
             {
                 var spriteMovement = EnsureComp<SpriteMovementComponent>(entity);
@@ -161,8 +165,6 @@ public abstract class SharedBorgSwitchableTypeSystem : EntitySystem
             {
                 RemComp<SpriteMovementComponent>(entity);
             }
-        }
-
-        // Starlight-end
+        } // Starlight - close of movement sprite state block
     }
 }

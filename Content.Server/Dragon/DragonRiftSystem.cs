@@ -2,19 +2,18 @@ using Content.Server.Chat.Systems;
 using Content.Server.NPC;
 using Content.Server.NPC.Systems;
 using Content.Server.Pinpointer;
-using Content.Shared.Damage;
 using Content.Shared.Dragon;
 using Content.Shared.Examine;
 using Content.Shared.Sprite;
-using Robust.Shared.GameObjects;
 using Robust.Shared.Map;
 using Robust.Shared.Player;
 using Robust.Shared.Serialization.Manager;
 using System.Numerics;
-using Robust.Shared.Audio;
+using Content.Shared.Damage.Components;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.GameStates;
 using Robust.Shared.Utility;
+using Content.Server.Station.Systems; // Starlight
 
 namespace Content.Server.Dragon;
 
@@ -29,6 +28,7 @@ public sealed class DragonRiftSystem : EntitySystem
     [Dependency] private readonly NavMapSystem _navMap = default!;
     [Dependency] private readonly NPCSystem _npc = default!;
     [Dependency] private readonly SharedAudioSystem _audio = default!;
+    [Dependency] private readonly StationSystem _station = default!; // Starlight
 
     public override void Initialize()
     {
@@ -80,11 +80,19 @@ public sealed class DragonRiftSystem : EntitySystem
                 comp.State = DragonRiftState.AlmostFinished;
                 Dirty(uid, comp);
 
-                var msg = Loc.GetString("carp-rift-warning",
-                    ("location", FormattedMessage.RemoveMarkupOrThrow(_navMap.GetNearestBeaconString((uid, xform)))));
-                _chat.DispatchGlobalAnnouncement(msg, playSound: false, colorOverride: Color.Red);
-                _audio.PlayGlobal("/Audio/Misc/notice1.ogg", Filter.Broadcast(), true);
-                _navMap.SetBeaconEnabled(uid, true);
+                //Starlight begin
+                var closestStation = _station.GetNearestStation(uid, true);
+                if (closestStation.Owner != EntityUid.Invalid)
+                {
+                    var msg = Loc.GetString("carp-rift-warning",
+                        ("location",
+                            FormattedMessage.RemoveMarkupOrThrow(_navMap.GetNearestBeaconString((uid, xform)))),
+                        ("station", MetaData(closestStation.Owner).EntityName));
+                    _chat.DispatchGlobalAnnouncement(msg, playSound: false, colorOverride: Color.Red);
+                    _audio.PlayGlobal("/Audio/Misc/notice1.ogg", Filter.Broadcast(), true);
+                    _navMap.SetBeaconEnabled(uid, true);
+                }
+                //Starlight end
             }
 
             if (comp.SpawnAccumulator > comp.SpawnCooldown)
@@ -124,6 +132,6 @@ public sealed class DragonRiftSystem : EntitySystem
         if (!TryComp<DragonComponent>(comp.Dragon, out var dragon) || dragon.Weakened)
             return;
 
-        _dragon.RiftDestroyed(comp.Dragon.Value, dragon);
+        _dragon.RiftDestroyed(comp.Dragon.Value, uid, dragon); // Starlight edit
     }
 }

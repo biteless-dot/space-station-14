@@ -1,7 +1,6 @@
 using System.Linq;
 using System.Text.Json.Serialization;
 using Content.Server.Body.Components;
-using Content.Shared.Body.Prototypes;
 using Content.Shared.Chemistry.Reaction;
 using Content.Shared.Chemistry.Reagent;
 using Content.Shared.EntityEffects;
@@ -76,7 +75,7 @@ public sealed class ReactionEntry
             proto.Products
                 .Select(x => KeyValuePair.Create(x.Key, x.Value.Float()))
                 .ToDictionary(x => x.Key, x => x.Value);
-        Effects = proto.Effects;
+        Effects = proto.Effects.ToList();
     }
 }
 

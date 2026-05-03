@@ -1,23 +1,27 @@
 - type: npcFaction
   id: Dragon
   hostile:
-    - NanoTrasen
-    - NanoTrasenSilicon # starlight
-    - Syndicate
-    - SyndicateSilicon # starlight
-    - DungeonSyndicate
-    - DungeonSoviet
-    - Xeno
-    - PetsNT
-    - Zombie
-    - Revolutionary
-    - Abyss
-    - Vampire
-    - Changeling
-    - AllHostile
-    - Wizard
-    - Gorilla
-    - Abductor # starlight
+  - NanoTrasen
+  - Syndicate
+  - Xeno
+  - PetsNT
+  - Zombie
+  - Revolutionary
+  - AllHostile
+  - Wizard
+  - Xenoborg
+  #Starlight start
+  - Changeling
+  - DungeonSoviet
+  - DungeonSyndicate
+  - Gorilla
+  - NanoTrasenSilicon
+  - Abductor
+  - Abyss
+  - SyndicateSilicon
+  - Vampire
+  - Pirate # starlight
+  #Starlight end
 
 - type: npcFaction
   id: NanoTrasen
@@ -39,6 +43,7 @@
     - Dragon
     - Gorilla
     - Abductor # starlight
+    - Pirate # starlight
 
 - type: npcFaction
   id: Mouse
@@ -53,6 +58,8 @@
 
 - type: npcFaction
   id: PetsNT
+  friendly:
+  - NanoTrasen
   hostile:
     - Mouse
     - SimpleHostile
@@ -89,6 +96,7 @@
     - Xeno
     - Gorilla
     - Abductor # starlight
+    - Pirate # starlight
 
 - type: npcFaction
   id: SimpleNeutral
@@ -113,6 +121,7 @@
     - Dragon
     - Gorilla
     - Abductor # starlight
+    - Pirate # starlight
 
 - type: npcFaction
   id: Xeno
@@ -135,6 +144,7 @@
     - Dragon
     - Xenoborg
     - Gorilla
+    - Pirate # starlight
 
 - type: npcFaction
   id: Zombie
@@ -156,6 +166,7 @@
     - Dragon
     - Gorilla
     - Abductor # starlight
+    - Pirate # starlight
 
 - type: npcFaction
   id: Revolutionary
@@ -173,6 +184,7 @@
     - AllHostile
     - Gorilla
     - Abductor # starlight
+    - Pirate # starlight
 
 - type: npcFaction
   id: Changeling
@@ -185,6 +197,7 @@
     - Revolutionary
     - AllHostile
     - Gorilla
+    - Pirate # starlight
 
 - type: npcFaction
   id: Vampire
@@ -199,6 +212,7 @@
     - Changeling
     - AllHostile
     - Gorilla
+    - Pirate # starlight
 
 - type: npcFaction
   id: HonkHostile
@@ -214,6 +228,7 @@
     - Wizard
     - Xenoborg
     - Gorilla
+    - Pirate # starlight
 
 - type: npcFaction
   id: HonkNeutral
@@ -251,6 +266,7 @@
     - Xenoborg
     - Gorilla
     - Abductor # starlight
+    - Pirate # starlight
 
 - type: npcFaction
   id: Wizard
@@ -272,6 +288,7 @@
     - Xenoborg
     - Gorilla
     - Abductor # starlight
+    - Pirate # starlight
 
 - type: npcFaction
   id: Xenoborg
@@ -293,3 +310,4 @@
     - AllHostile
     - Abductor # starlight
     - Gorilla # starlight
+    - Pirate # starlight

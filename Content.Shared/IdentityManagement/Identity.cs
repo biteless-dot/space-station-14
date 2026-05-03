@@ -1,5 +1,6 @@
 ﻿using Content.Shared.Ghost;
 using Content.Shared.IdentityManagement.Components;
+using Content.Shared._Starlight.NameConfusion; // Starlight
 
 namespace Content.Shared.IdentityManagement;
 
@@ -13,7 +14,13 @@ public static class Identity
     /// <summary>
     ///     Returns the name that should be used for this entity for identity purposes.
     /// </summary>
-    public static string Name(EntityUid uid, IEntityManager ent, EntityUid? viewer=null)
+    /// <remarks>
+    /// This will return the true identity of the entity if called before the
+    /// identity component has been initialized — this may occur for example if
+    /// the client raises an event in response to an entity entering PVS for
+    /// the first time.
+    /// </remarks>
+    public static string Name(EntityUid uid, IEntityManager ent, EntityUid? viewer = null)
     {
         if (!uid.IsValid())
             return string.Empty;
@@ -24,10 +31,15 @@ public static class Identity
 
         var uidName = meta.EntityName;
 
+        // Starlight begin: NameConfusion overrides even this.
+        if (ent.TryGetComponent<NameConfusionComponent>(uid, out var confusion) && confusion.CurrentName is not null)
+            return confusion.CurrentName;
+        // Starlight end
+
         if (!ent.TryGetComponent<IdentityComponent>(uid, out var identity))
             return uidName;
 
-        var ident = identity.IdentityEntitySlot.ContainedEntity;
+        var ident = identity.IdentityEntitySlot?.ContainedEntity;
         if (ident is null)
             return uidName;
 
@@ -36,7 +48,7 @@ public static class Identity
         {
             return identName;
         }
-        if (uidName == identName)
+        if (uidName.Contains(identName)) // Starlight-edit: if main name contains indentity name - then we don't need to add it in brackets
         {
             return uidName;
         }
@@ -52,6 +64,7 @@ public static class Identity
     /// <param name="viewer">
     ///     If this entity can see through identities, this method will always return the actual target entity.
     /// </param>
+    /// <inheritdoc cref="Name" path="remarks" />
     public static EntityUid Entity(EntityUid uid, IEntityManager ent, EntityUid? viewer = null)
     {
         if (!ent.TryGetComponent<IdentityComponent>(uid, out var identity))
@@ -60,7 +73,7 @@ public static class Identity
         if (viewer != null && CanSeeThroughIdentity(uid, viewer.Value, ent))
             return uid;
 
-        return identity.IdentityEntitySlot.ContainedEntity ?? uid;
+        return identity.IdentityEntitySlot?.ContainedEntity ?? uid;
     }
 
     public static bool CanSeeThroughIdentity(EntityUid uid, EntityUid viewer, IEntityManager ent)

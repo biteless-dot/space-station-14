@@ -95,7 +95,7 @@ public sealed class MassDriverSystem : SharedMassDriverSystem
     public override void ChangePowerLoad(EntityUid uid, MassDriverComponent component, float powerLoad)
     {
         if (TryComp<ApcPowerReceiverComponent>(uid, out var receiver))
-            _powerReceiver.SetLoad(receiver, powerLoad);
+            _powerReceiver.SetLoad(uid, powerLoad);
     }
 
     #endregion
@@ -202,6 +202,6 @@ public sealed class MassDriverSystem : SharedMassDriverSystem
 
         _ui.ServerSendUiMessage(uid, MassDriverConsoleUiKey.Key, new MassDriverUpdateUIMessage(state)); // Update UI on Open
     }
-    
+
     #endregion
 }

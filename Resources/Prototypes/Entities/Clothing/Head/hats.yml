@@ -525,14 +525,14 @@
   description: A strange-looking red hat that most certainly belongs to a powerful magic-user.
   components:
   - type: Sprite
-    sprite: Clothing/Head/Hats/redwizard.rsi
+    sprite: _Starlight/Clothing/Head/Hats/wizard_red.rsi # Starlight resprited
   - type: Clothing
-    sprite: Clothing/Head/Hats/redwizard.rsi
+    sprite: _Starlight/Clothing/Head/Hats/wizard_red.rsi # Starlight resprited
   - type: Tag
     tags:
     - PetWearable
     - CorgiWearable
-    - HamsterWearable
+#    - HamsterWearable # Starlight
     - ClothMade
     - WhitelistChameleon
 
@@ -564,6 +564,8 @@
     - state: icon-nobeard
       map: [ "foldedLayer" ]
       visible: true
+  - type: Item
+    storedRotation: 0
   - type: Tag
     tags:
     - PetWearable
@@ -589,7 +591,7 @@
 - type: entity
   parent: ClothingHeadBase
   id: ClothingHeadHatSurgcapBlue
-  name: surgical cap
+  name: blue surgical cap
   description: A blue cap surgeons wear during operations. Keeps their hair from tickling your internal organs.
   components:
   - type: Sprite
@@ -611,7 +613,7 @@
 - type: entity
   parent: ClothingHeadBase
   id: ClothingHeadHatSurgcapGreen
-  name: surgical cap
+  name: green surgical cap
   description: A green cap surgeons wear during operations. Keeps their hair from tickling your internal organs.
   components:
   - type: Sprite
@@ -627,7 +629,7 @@
 - type: entity
   parent: ClothingHeadBase
   id: ClothingHeadHatSurgcapPurple
-  name: surgical cap
+  name: purple surgical cap
   description: A purple cap surgeons wear during operations. Keeps their hair from tickling your internal organs.
   components:
   - type: Sprite
@@ -805,13 +807,13 @@
 - type: entity
   parent: ClothingHeadHatWizardBase
   id: ClothingHeadHatWizard
-  name: wizard hat
+  name: blue wizard hat # Starlight name consistency
   description: A strange-looking blue hat that most certainly belongs to a powerful magic-user.
   components:
   - type: Sprite
-    sprite: Clothing/Head/Hats/wizardhat.rsi
+    sprite: _Starlight/Clothing/Head/Hats/wizard_blue.rsi # Starlight resprited
   - type: Clothing
-    sprite: Clothing/Head/Hats/wizardhat.rsi
+    sprite: _Starlight/Clothing/Head/Hats/wizard_blue.rsi # Starlight resprited
   - type: Tag
     tags:
     - PetWearable
@@ -845,7 +847,7 @@
     sprite: Clothing/Head/Hats/truckershat.rsi
 
 - type: entity
-  parent: [ ClothingHeadBase, BaseMajorContraband ] #SL EDIT, Syndie to Major
+  parent: [ ClothingHeadBase, BaseMinorContraband ] #SL EDIT, Syndie to Minor
   id: ClothingHeadPyjamaSyndicateBlack
   name: syndicate black pyjama hat
   description: For keeping that traitor head of yours warm.
@@ -861,7 +863,7 @@
       HeadSide : HEAD
 
 - type: entity
-  parent: [ ClothingHeadBase, BaseMajorContraband ] #SL EDIT, Syndie to Major
+  parent: [ ClothingHeadBase, BaseMinorContraband ] #SL EDIT, Syndie to Minor
   id: ClothingHeadPyjamaSyndicatePink
   name: syndicate pink pyjama hat
   description: For keeping that traitor head of yours warm.
@@ -877,7 +879,7 @@
       HeadSide : HEAD
 
 - type: entity
-  parent: [ ClothingHeadBase, BaseMajorContraband ] #SL EDIT, Syndie to Major
+  parent: [ ClothingHeadBase, BaseMinorContraband ] #SL EDIT, Syndie to Minor
   id: ClothingHeadPyjamaSyndicateRed
   name: syndicate red pyjama hat
   description: For keeping that traitor head of yours warm.
@@ -1082,7 +1084,7 @@
         Caustic: 0.95
 
 - type: entity
-  parent: [ClothingHeadBase, BaseMajorContraband] #SL EDIT, Syndie to Major
+  parent: [ClothingHeadBase, BaseMinorContraband] #SL EDIT, Syndie to Minor
   id: ClothingHeadHatSyndie
   name: syndicate hat
   description: A souvenir hat from "Syndieland", their production has already been closed.
@@ -1234,6 +1236,8 @@
     sprite: Clothing/Head/Hats/party_red.rsi
   - type: Clothing
     sprite: Clothing/Head/Hats/party_red.rsi
+  - type: Item
+    storedRotation: 0
   - type: Tag
     tags:
     - PetWearable
@@ -1250,12 +1254,6 @@
     sprite: Clothing/Head/Hats/party_yellow.rsi
   - type: Clothing
     sprite: Clothing/Head/Hats/party_yellow.rsi
-  - type: Tag
-    tags:
-    - PetWearable
-    - CorgiWearable
-    - WhitelistChameleon
-    - HamsterWearable
 
 - type: entity
   parent: ClothingHeadHatPartyRed
@@ -1266,12 +1264,6 @@
     sprite: Clothing/Head/Hats/party_green.rsi
   - type: Clothing
     sprite: Clothing/Head/Hats/party_green.rsi
-  - type: Tag
-    tags:
-    - PetWearable
-    - CorgiWearable
-    - WhitelistChameleon
-    - HamsterWearable
 
 - type: entity
   parent: ClothingHeadHatPartyRed
@@ -1282,12 +1274,6 @@
     sprite: Clothing/Head/Hats/party_blue.rsi
   - type: Clothing
     sprite: Clothing/Head/Hats/party_blue.rsi
-  - type: Tag
-    tags:
-    - PetWearable
-    - CorgiWearable
-    - WhitelistChameleon
-    - HamsterWearable
 
 - type: entity
   parent: ClothingHeadHatPartyRed

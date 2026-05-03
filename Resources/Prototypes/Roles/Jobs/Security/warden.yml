@@ -6,27 +6,30 @@
   requirements:
     - !type:RoleTimeRequirement
       role: JobSecurityOfficer
-      time: 72000 # 20 hrs
+      time: 15h # Starlight
+    - !type:RoleTimeRequirement # Starlight
+      role: JobDutyOfficer # Starlight
+      time: 5h # Starlight
     - !type:RoleTimeRequirement
-      role: JobDetective
-      time: 3600 # 1 hr
+      role: JobDetective # Starlight
+      time: 1h # Starlight
   weight: 5
   startingGear: WardenGear
   icon: "JobIconWarden"
   supervisors: job-supervisors-hos
   canBeAntag: false
   access:
+  - Cadet # Starlight
   - Security
   - Brig
   - Armory
   - Maintenance
-  - Service
   - External
   - Detective
   - Cryogenics
-  - Brigmedic
-  - GenpopEnter #starlight
-  - GenpopLeave #starlight
+  - Brigmedic # Starlight
+  - GenpopEnter
+  - GenpopLeave
   special:
   - !type:AddImplantSpecial
     implants: [ MindShieldImplant ]
@@ -54,5 +57,5 @@
     jumpsuit: ClothingUniformJumpsuitWarden
     neck: Dinkystar
     belt: ClothingBeltSecurity
-    gloves: ClothingHandsGlovesCombat
+    # gloves: ClothingHandsGlovesCombat # Starlight
     shoes: ClothingShoesBootsJack

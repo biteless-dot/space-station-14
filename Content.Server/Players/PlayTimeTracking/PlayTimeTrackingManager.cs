@@ -5,9 +5,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Content.Server._NullLink.Core; // NullLink
 using Content.Server._NullLink.Helpers; // NullLink
+using Content.Server._NullLink.PlayerData;
 using Content.Server.Database;
 using Content.Shared.CCVar;
 using Content.Shared.Players.PlayTimeTracking;
+using Robust.Server.Player;
 using Robust.Shared.Asynchronous;
 using Robust.Shared.Collections;
 using Robust.Shared.Configuration;
@@ -63,6 +65,7 @@ public sealed class PlayTimeTrackingManager : ISharedPlaytimeManager, IPostInjec
 {
     [Dependency] private readonly IServerDbManager _db = default!;
     [Dependency] private readonly IActorRouter _actor = default!; // NullLink
+    [Dependency] private readonly IPlayerManager _player = default!; // NullLink
     [Dependency] private readonly IServerNetManager _net = default!;
     [Dependency] private readonly IConfigurationManager _cfg = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
@@ -217,7 +220,7 @@ public sealed class PlayTimeTrackingManager : ISharedPlaytimeManager, IPostInjec
 
     private void SendPlayTimes(ICommonSession pSession)
     {
-        var roles = GetTrackerTimes(pSession);
+        var roles = GetOriginalTrackerTimes(pSession); // starlight: send only current server data, client handles merging
 
         var msg = new MsgPlayTime
         {
@@ -294,7 +297,7 @@ public sealed class PlayTimeTrackingManager : ISharedPlaytimeManager, IPostInjec
         {
             Pipe.RunInBackgroundVT
             (
-                ()=> server.UpdatePlayersPlayTime([.. log
+                () => server.UpdatePlayersPlayTime([.. log
                     .GroupBy(x => x.User)
                     .Select(x => new PlayerPlayTime
                     {
@@ -363,7 +366,13 @@ public sealed class PlayTimeTrackingManager : ISharedPlaytimeManager, IPostInjec
 
         foreach (var timer in playTimes)
         {
-            data.TrackerTimes.Add(timer.Tracker, timer.TimeSpent);
+            // Starlight start
+            ref var tracked = ref CollectionsMarshal.GetValueRefOrAddDefault(data.TrackerTimes, timer.Tracker, out _);
+            tracked += timer.TimeSpent;
+
+            ref var merged = ref CollectionsMarshal.GetValueRefOrAddDefault(data.MergedTrackerTimes, timer.Tracker, out _); //NullLink
+            merged += timer.TimeSpent; //NullLink
+            // Starlight end
         }
 
         data.Initialized = true;
@@ -371,6 +380,27 @@ public sealed class PlayTimeTrackingManager : ISharedPlaytimeManager, IPostInjec
         QueueRefreshTrackers(session);
         QueueSendTimers(session);
     }
+
+    // NullLink start
+    public void EnrichWithNullLink(Dictionary<string, TimeSpan> playtime, Guid userId)
+    {
+        if (!_player.TryGetSessionById(new NetUserId(userId), out var session))
+            return;
+
+        if (!_playTimeData.TryGetValue(session, out var data))
+            return;
+
+        data.MergedTrackerTimes = playtime;
+        foreach (var (tracker, time) in data.TrackerTimes)
+        {
+            var merged = time;
+            if (data.MergedTrackerTimes.TryGetValue(tracker, out var nullinked))
+                merged += nullinked;
+
+            data.MergedTrackerTimes[tracker] = merged;
+        }
+    }
+    // NullLink end
 
     public void ClientDisconnected(ICommonSession session)
     {
@@ -392,6 +422,11 @@ public sealed class PlayTimeTrackingManager : ISharedPlaytimeManager, IPostInjec
         ref var timer = ref CollectionsMarshal.GetValueRefOrAddDefault(data.TrackerTimes, tracker, out _);
         timer += time;
 
+        // NullLink start
+        ref var mergedTimer = ref CollectionsMarshal.GetValueRefOrAddDefault(data.MergedTrackerTimes, tracker, out _);
+        mergedTimer += time;
+        // NullLink end
+
         data.DbTrackersDirty.Add(tracker);
     }
 
@@ -405,7 +440,8 @@ public sealed class PlayTimeTrackingManager : ISharedPlaytimeManager, IPostInjec
         return GetPlayTimeForTracker(id, PlayTimeTrackingShared.TrackerOverall);
     }
 
-    public bool TryGetTrackerTimes(ICommonSession id, [NotNullWhen(true)] out Dictionary<string, TimeSpan>? time)
+    // NullLink start
+    public bool TryGetOriginalTrackerTimes(ICommonSession id, [NotNullWhen(true)] out Dictionary<string, TimeSpan>? time)
     {
         time = null;
 
@@ -415,6 +451,20 @@ public sealed class PlayTimeTrackingManager : ISharedPlaytimeManager, IPostInjec
         }
 
         time = data.TrackerTimes;
+        return true;
+    }
+    // NullLink end
+
+    public bool TryGetTrackerTimes(ICommonSession id, [NotNullWhen(true)] out Dictionary<string, TimeSpan>? time)
+    {
+        time = null;
+
+        if (!_playTimeData.TryGetValue(id, out var data) || !data.Initialized)
+        {
+            return false;
+        }
+
+        time = data.MergedTrackerTimes; // Nulllink
         return true;
     }
 
@@ -430,13 +480,22 @@ public sealed class PlayTimeTrackingManager : ISharedPlaytimeManager, IPostInjec
         time = t;
         return true;
     }
+    // NullLink start
+    public Dictionary<string, TimeSpan> GetOriginalTrackerTimes(ICommonSession id)
+    {
+        if (!_playTimeData.TryGetValue(id, out var data) || !data.Initialized)
+            throw new InvalidOperationException("Play time info is not yet loaded for this player!");
+
+        return data.TrackerTimes;
+    }
+    // NullLink end
 
     public Dictionary<string, TimeSpan> GetTrackerTimes(ICommonSession id)
     {
         if (!_playTimeData.TryGetValue(id, out var data) || !data.Initialized)
             throw new InvalidOperationException("Play time info is not yet loaded for this player!");
 
-        return data.TrackerTimes;
+        return data.MergedTrackerTimes; // Nulllink
     }
 
     public TimeSpan GetPlayTimeForTracker(ICommonSession id, string tracker)
@@ -444,7 +503,7 @@ public sealed class PlayTimeTrackingManager : ISharedPlaytimeManager, IPostInjec
         if (!_playTimeData.TryGetValue(id, out var data) || !data.Initialized)
             throw new InvalidOperationException("Play time info is not yet loaded for this player!");
 
-        return data.TrackerTimes.GetValueOrDefault(tracker);
+        return data.MergedTrackerTimes.GetValueOrDefault(tracker); // Nulllink
     }
 
     /// <summary>
@@ -501,6 +560,12 @@ public sealed class PlayTimeTrackingManager : ISharedPlaytimeManager, IPostInjec
         public bool Initialized;
 
         public readonly Dictionary<string, TimeSpan> TrackerTimes = new();
+
+        // Nulllink
+        /// <summary>
+        /// Playtime of the current server, combined with recognized servers.
+        /// </summary>
+        public Dictionary<string, TimeSpan> MergedTrackerTimes = [];
 
         /// <summary>
         /// Set of trackers which are different from their DB values and need to be saved to DB.

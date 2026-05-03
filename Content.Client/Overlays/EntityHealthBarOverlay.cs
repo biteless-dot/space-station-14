@@ -1,7 +1,7 @@
 using System.Numerics;
 using Content.Client.StatusIcon;
 using Content.Client.UserInterface.Systems;
-using Content.Shared.Damage;
+using Content.Shared.Damage.Components;
 using Content.Shared.FixedPoint;
 using Content.Shared.Mobs;
 using Content.Shared.Mobs.Components;
@@ -34,7 +34,7 @@ public sealed class EntityHealthBarOverlay : Overlay
 
     public override OverlaySpace Space => OverlaySpace.WorldSpaceBelowFOV;
     public HashSet<string> DamageContainers = new();
-    public ProtoId<HealthIconPrototype>? StatusIcon;
+    public ProtoId<HealthBarIconPrototype>? StatusIcon; // Starlight
 
     public EntityHealthBarOverlay(IEntityManager entManager, IPrototypeManager prototype)
     {

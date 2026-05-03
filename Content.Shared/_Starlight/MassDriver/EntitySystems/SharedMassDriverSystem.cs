@@ -5,6 +5,7 @@ using Content.Shared.Power.EntitySystems;
 using Content.Shared.Audio;
 using Robust.Shared.Timing;
 using Robust.Shared.GameObjects;
+using Content.Shared.Ghost;
 
 namespace Content.Shared._Starlight.MassDriver.EntitySystems;
 
@@ -15,11 +16,12 @@ public abstract class SharedMassDriverSystem : EntitySystem
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
     [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
     [Dependency] private readonly SharedAmbientSoundSystem _audioSystem = default!;
+    private EntityQuery<GhostComponent> _ghostQuery;
 
     public override void Initialize()
     {
         base.Initialize();
-
+        _ghostQuery = GetEntityQuery<GhostComponent>();
         SubscribeLocalEvent<MassDriverComponent, PowerChangedEvent>(OnPowerChanged);
     }
 
@@ -63,7 +65,10 @@ public abstract class SharedMassDriverSystem : EntitySystem
             Dirty(uid, massDriver);
 
             entities.Clear();
-            _lookup.GetEntitiesIntersecting(uid, entities, LookupFlags.Dynamic | LookupFlags.Approximate);
+            _lookup.GetEntitiesIntersecting(uid, entities, LookupFlags.Dynamic);
+
+            // Preventing Ghosts from activating mass drivers
+            entities.RemoveWhere(_ghostQuery.HasComp);
 
             int entitiesCount = entities.Count;
 

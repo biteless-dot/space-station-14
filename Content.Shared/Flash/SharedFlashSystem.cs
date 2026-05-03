@@ -22,6 +22,7 @@ using Robust.Shared.Timing;
 using System.Linq;
 using Content.Shared.Movement.Systems;
 using Content.Shared.Random.Helpers;
+using Content.Shared.Clothing.Components;
 
 namespace Content.Shared.Flash;
 
@@ -61,10 +62,25 @@ public abstract class SharedFlashSystem : EntitySystem
         SubscribeLocalEvent<TemporaryBlindnessComponent, FlashAttemptEvent>(OnTemporaryBlindnessFlashAttempt);
         Subs.SubscribeWithRelay<FlashImmunityComponent, FlashAttemptEvent>(OnFlashImmunityFlashAttempt, held: false);
         SubscribeLocalEvent<FlashImmunityComponent, ExaminedEvent>(OnExamine);
+        SubscribeLocalEvent<FlashComponent, MapInitEvent>(OnFlashMapInit); // Starlight
 
         _statusEffectsQuery = GetEntityQuery<StatusEffectsComponent>();
         _damagedByFlashingQuery = GetEntityQuery<DamagedByFlashingComponent>();
     }
+
+    // Starlight begin
+    /// <summary>
+    /// Adds support for a flash that starts with 0 charges to properly show as burnt out.
+    /// </summary>
+    private void OnFlashMapInit(EntityUid uid, FlashComponent flash, ref MapInitEvent args)
+    {
+        if (TryComp<LimitedChargesComponent>(uid, out var charges) && ((charges.MaxCharges == 0)))
+        {
+            _appearance.SetData(uid, FlashVisuals.Burnt, true);
+            _tag.AddTag(uid, TrashTag);
+        }
+    }
+    // Starlight end
 
     private void OnFlashMeleeHit(Entity<FlashComponent> ent, ref MeleeHitEvent args)
     {
@@ -205,7 +221,7 @@ public abstract class SharedFlashSystem : EntitySystem
         foreach (var entity in _entSet)
         {
             // TODO: Use RandomPredicted https://github.com/space-wizards/RobustToolbox/pull/5849
-            var seed = SharedRandomExtensions.HashCodeCombine(new() { (int)_timing.CurTick.Value, GetNetEntity(entity).Id });
+            var seed = SharedRandomExtensions.HashCodeCombine((int)_timing.CurTick.Value, GetNetEntity(entity).Id);
             var rand = new System.Random(seed);
             if (!rand.Prob(probability))
                 continue;
@@ -258,12 +274,16 @@ public abstract class SharedFlashSystem : EntitySystem
 
     private void OnFlashImmunityFlashAttempt(Entity<FlashImmunityComponent> ent, ref FlashAttemptEvent args)
     {
+        if (TryComp<MaskComponent>(ent, out var mask) && mask.IsToggled)
+            return;
+
         if (ent.Comp.Enabled)
             args.Cancelled = true;
     }
 
     private void OnExamine(Entity<FlashImmunityComponent> ent, ref ExaminedEvent args)
     {
-        args.PushMarkup(Loc.GetString("flash-protection"));
+        if (ent.Comp.ShowInExamine)
+            args.PushMarkup(Loc.GetString("flash-protection"));
     }
 }

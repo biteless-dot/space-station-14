@@ -32,6 +32,9 @@ ghost-role-information-silicon-rules = You are a [color={role-type-silicon-color
 ghost-role-information-mouse-name = Mouse
 ghost-role-information-mouse-description = A hungry and mischievous mouse.
 
+ghost-role-information-cancer-mouse-name = Cancer Mouse
+ghost-role-information-cancer-mouse-description = An irradiated mouse, spread your affliction and seek food.
+
 ghost-role-information-mothroach-name = Mothroach
 ghost-role-information-mothroach-description = A cute but mischievous mothroach.
 
@@ -160,7 +163,8 @@ ghost-role-information-closet-skeleton-name = Closet Skeleton
 ghost-role-information-closet-skeleton-description = You are arguably one of the oldest members of the station!
 
 ghost-role-information-remilia-name = Remilia, the Chaplain's Familiar
-ghost-role-information-remilia-description = Follow and obey the chaplain. Eat fruit. Screech loudly into people's ears and write it off as echolocation.
+# Starlight:
+ghost-role-information-remilia-description = Follow and obey the Chaplain. Eat fruit. Whisper in a secret language about all the things you've seen. Screech loudly into people's ears and write it off as echolocation.
 
 ghost-role-information-cerberus-name = Cerberus, Evil Familiar
 ghost-role-information-cerberus-description = Obey your master. Spread chaos.
@@ -340,6 +344,12 @@ ghost-role-information-tomatokiller-description = This little tomato will serve 
 ghost-role-information-gingerbread-name = Gingerbread Man
 ghost-role-information-gingerbread-description = A being of pure holiday spirit.
                                      Spread molassesy goodness and to all good cheer.
+
+ghost-role-information-mothership-core-name = Mothership Core
+ghost-role-information-mothership-core-desc = You are the core of the xenoborg mothership, help them multiply by borging any brain they bring to you.
+
+ghost-role-information-xenoborg-name = Xenoborg
+ghost-role-information-xenoborg-desc = A strange cyborg made to replicate itself and take over the station by turning any sentient being into xenoborgs.
 
 ghost-role-information-wizard-name = Wizard
 ghost-role-information-wizard-desc = YER A WIZARD! Show the station what your magic is made of.

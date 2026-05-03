@@ -175,8 +175,8 @@ reagent-desc-hooch = Either someone's failure at cocktail making or attempt in a
 reagent-name-iced-beer = iced beer
 reagent-desc-iced-beer = A beer which is so cold the air around it freezes.
 
-reagent-name-irish-car-bomb = Irish car bomb 
-reagent-desc-irish-car-bomb = What's black and white and red all over? 
+reagent-name-irish-car-bomb = Irish car bomb
+reagent-desc-irish-car-bomb = What's black and white and red all over?
 #Starlight Change Above
 
 reagent-name-irish-cream = Irish cream
@@ -193,9 +193,6 @@ reagent-desc-jungle-bird = Despite the name, it’s not exceptionally popular am
 
 reagent-name-kalimotxo = kalimotxo
 reagent-desc-kalimotxo = A high-class Cuba Libre, for the discerning alcoholic.
-
-reagent-name-kira-special = Kira special
-reagent-desc-kira-special = Long live the guy who everyone had mistaken for a girl. Baka!
 
 reagent-name-tortuga = Tortuga
 reagent-desc-tortuga = Perfect for pirates who’ve been selected as the designated driver. Yarr!

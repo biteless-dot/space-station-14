@@ -1,4 +1,6 @@
 ﻿using Content.Client._Starlight.Managers;
+using Content.Client._Starlight.Achievement;
+using Content.Client._NullLink; // NullLink
 using Content.Client.Administration.Managers;
 using Content.Client.Changelog;
 using Content.Client.Chat.Managers;
@@ -81,29 +83,33 @@ namespace Content.Client.Entry
         [Dependency] private readonly TitleWindowManager _titleWindowManager = default!;
         [Dependency] private readonly IEntitySystemManager _entitySystemManager = default!;
         [Dependency] private readonly ClientsidePlaytimeTrackingManager _clientsidePlaytimeManager = default!;
-       	[Dependency] private readonly INullLinkPlayerRolesManager _nullLinkPlayerRolesManager = default!; //NullLink
-       	[Dependency] private readonly ISharedNullLinkPlayerRolesReqManager _sharedNullLinkPlayer = default!; //NullLink
+        [Dependency] private readonly INullLinkPlayerRolesManager _nullLinkPlayerRolesManager = default!; //NullLink
+        [Dependency] private readonly INullLinkPlayerResourcesManager _nullLinkResourcesManager = default!; //NullLink
+        [Dependency] private readonly ISharedNullLinkPlayerRolesReqManager _sharedNullLinkPlayer = default!; //NullLink
         [Dependency] private readonly PreWrittenDocumentManager _documentManager = default!; // Starlight
+        [Dependency] private readonly IClientAchievementManager _achievementManager = default!; // Starlight
 
-        public override void Init()
+        public override void PreInit()
         {
-            ClientContentIoC.Register();
+            ClientContentIoC.Register(Dependencies);
 
             foreach (var callback in TestingCallbacks)
             {
                 var cast = (ClientModuleTestingCallbacks) callback;
                 cast.ClientBeforeIoC?.Invoke();
             }
+        }
 
-            IoCManager.BuildGraph();
-            IoCManager.InjectDependencies(this);
+        public override void Init()
+        {
+            Dependencies.BuildGraph();
+            Dependencies.InjectDependencies(this);
 
             _contentLoc.Initialize();
             _componentFactory.DoAutoRegistrations();
             _componentFactory.IgnoreMissingComponents();
 
             // Do not add to these, they are legacy.
-            _componentFactory.RegisterClass<SharedGravityGeneratorComponent>();
             _componentFactory.RegisterClass<SharedAmeControllerComponent>();
             // Do not add to the above, they are legacy
 
@@ -118,7 +124,6 @@ namespace Content.Client.Entry
             _prototypeManager.RegisterIgnore("htnPrimitive");
             _prototypeManager.RegisterIgnore("gameMap");
             _prototypeManager.RegisterIgnore("gameMapPool");
-            //_prototypeManager.RegisterIgnore("lobbyBackground"); //starlight, disabled for main menu art credits
             _prototypeManager.RegisterIgnore("gamePreset");
             _prototypeManager.RegisterIgnore("noiseChannel");
             _prototypeManager.RegisterIgnore("playerConnectionWhitelist");
@@ -135,7 +140,7 @@ namespace Content.Client.Entry
             _prototypeManager.RegisterIgnore("ghostRoleRaffleDecider");
             _prototypeManager.RegisterIgnore("codewordGenerator");
             _prototypeManager.RegisterIgnore("codewordFaction");
-            
+
             _prototypeManager.RegisterIgnore("onSignActions"); //🌟Starlight🌟
 
             _documentManager.Initialize(); // Starlight
@@ -149,7 +154,7 @@ namespace Content.Client.Entry
             _viewportManager.Initialize();
             _ghostKick.Initialize();
             _extendedDisconnectInformation.Initialize();
-            _jobRequirements.Initialize();
+            //_jobRequirements.Initialize(); //🌟Starlight🌟 - Moved to PostInit
             _playbackMan.Initialize();
             _clientsidePlaytimeManager.Initialize();
 
@@ -159,12 +164,6 @@ namespace Content.Client.Entry
             _configManager.SetCVar("interface.resolutionAutoScaleLowerCutoffX", 520);
             _configManager.SetCVar("interface.resolutionAutoScaleLowerCutoffY", 240);
             _configManager.SetCVar("interface.resolutionAutoScaleMinimum", 0.5f);
-        }
-
-        public override void Shutdown()
-        {
-            base.Shutdown();
-            _titleWindowManager.Shutdown();
         }
 
         public override void PostInit()
@@ -189,6 +188,8 @@ namespace Content.Client.Entry
             _documentParsingManager.Initialize();
             _titleWindowManager.Initialize();
 
+            _jobRequirements.Initialize(); //🌟Starlight🌟
+
             _baseClient.RunLevelChanged += (_, args) =>
             {
                 if (args.NewLevel == ClientRunLevel.Initialize)
@@ -200,8 +201,11 @@ namespace Content.Client.Entry
 
             // NullLink start
             _nullLinkPlayerRolesManager.Initialize();
+            _nullLinkResourcesManager.Initialize();
             _sharedNullLinkPlayer.Initialize();
             // NullLink end
+
+            _achievementManager.Initialize(); // Starlight
 
             // Disable engine-default viewport since we use our own custom viewport control.
             _userInterfaceManager.MainViewport.Visible = false;
