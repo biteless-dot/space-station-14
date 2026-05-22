@@ -41,6 +41,7 @@
 - type: damageModifierSet
   id: Rock
   coefficients:
+    Terrain: 4 # Starlight
     Structural: 4
     Blunt: 0.5
     Slash: 0.25

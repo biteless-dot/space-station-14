@@ -1,0 +1,6 @@
+# Terrain damage to natural tiles like asteroids, ore rocks, etc.
+- type: damageType
+  id: Terrain
+  name: damage-type-terrain
+  armorCoefficientPrice: 1
+  armorFlatPrice: 1
