@@ -1,0 +1,14 @@
+- type: explosion
+  id: TerraformCharge
+  damagePerIntensity:
+    types:
+      Heat: 3
+      Blunt: 1
+      Piercing: 1
+      Terrain: 30
+  tileBreakChance: [0]
+  tileBreakIntensity: [0]
+  lightColor: Blue
+  fireColor: Blue
+  texturePath: /Textures/Effects/fire_greyscale.rsi
+  fireStates: 3

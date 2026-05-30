@@ -1,8 +1,9 @@
+
 - type: entity
-  name: proto-kinetic terraformer [non explosive]
-  id: WeaponProtoKineticTerraformerProjectile
-  parent: [WeaponProtoKineticAcceleratorBase, BaseCargoContraband]
-  description: Fires kinetic bolts at a short range.
+  name: proto-kinetic terraformer
+  id: WeaponProtoKineticTerraformer
+  parent: [WeaponProtoKineticAcceleratorBase, BaseSalvageMiningContraband]
+  description: Fires terraforming kinetic impact bolts at a short range.
   components:
     - type: Sprite
       sprite: Objects/Weapons/Guns/Basic/kinetic_accelerator.rsi
@@ -20,8 +21,11 @@
       heldPrefixes:
         icon_h: "h"
         icon_u: "u"
-    # todo: add itemcomponent with inhandVisuals states using unused texture and animation assets in kinetic_accelerator.rsi
-    # todo: add clothingcomponent with clothingVisuals states using unused texture and animations assets in kinetic_accelerator.rsi
+    - type: Gun
+      fireRate: 0.4
+      projectileSpeed: 15
+#    - type: RechargeBasicEntityAmmo
+#      rechargeCooldown: 2
     - type: UpgradeableGun
       whitelist:
         tags:
@@ -30,134 +34,13 @@
       containers:
         upgrades: !type:Container
     - type: BasicEntityAmmoProvider
-      proto: BulletKinetic
+      proto: BulletKineticTerraformer
       capacity: 1
       count: 1
 
 - type: entity
   id: BulletKineticTerraformer
-  name: kinetic bolt
-  parent: BaseBullet
-  categories: [ HideSpawnMenu ]
-  description: Not too bad, but you still don't want to get hit by it.
-  components:
-    - type: Reflective
-      reflective:
-        - NonEnergy
-    - type: Sprite
-      noRot: false
-      sprite: Objects/Weapons/Guns/Projectiles/magic.rsi
-      layers:
-        - state: chronobolt
-          shader: unshaded
-    - type: Projectile
-      impactEffect: BulletImpactEffectKinetic
-      damage:
-        types:
-          Blunt: 1
-          Structural: 5
-          Terrain: 30
-    # Short lifespan
-    - type: TimedDespawn
-      lifetime: 0.275 # roughly 6.5 tiles
-    - type: GatheringProjectile
-
-# ------
-
-- type: entity
-  name: proto-kinetic terraformer [explosive]
-  id: WeaponProtoKineticTerraformerExplosive
-  parent: [WeaponProtoKineticAcceleratorBase, BaseCargoContraband]
-  description: Fires explosive kinetic bolts at a short range.
-  components:
-    - type: Sprite
-      sprite: Objects/Weapons/Guns/Basic/kinetic_accelerator.rsi
-      layers:
-        - state: icon
-        - state: animation-icon
-          visible: false
-          map: [ "empty-icon" ]
-    - type: RandomSprite
-      available:
-        - 0:
-            icon: ""
-            icon_h: ""
-            icon_u: ""
-      heldPrefixes:
-        icon_h: "h"
-        icon_u: "u"
-    # todo: add itemcomponent with inhandVisuals states using unused texture and animation assets in kinetic_accelerator.rsi
-    # todo: add clothingcomponent with clothingVisuals states using unused texture and animations assets in kinetic_accelerator.rsi
-    - type: UpgradeableGun
-      whitelist:
-        tags:
-          - PKAUpgrade
-    - type: ContainerContainer
-      containers:
-        upgrades: !type:Container
-    - type: BasicEntityAmmoProvider
-      proto: BulletKineticTerraformerExplosive
-      capacity: 1
-      count: 1
-
-#- type: entity
-#  name: proto-kinetic terraformer RPG [explosive]
-#  parent: [ BaseWeaponLauncher, BaseMiningContraband]
-#  id: WeaponProtoKineticTerraformerExplosiveRPG
-#  description: Fires explosive kinetic bolts at a short range.
-#  components:
-#    - type: KnockbackByUserTag # Starlight
-#      doestContain:
-#        Skating:
-#          knockback: -2.5
-#        Resomi:
-#          knockback: -5
-#        Avali:
-#          knockback: -2.5 # half of what resomi take
-#        Felionoid:
-#          knockback: -2.5 # half of what resomi take
-#    - type: Sprite
-#      sprite: Objects/Weapons/Guns/Basic/kinetic_accelerator.rsi
-#      layers:
-#        - state: icon
-#        - state: animation-icon
-#          visible: false
-#          map: [ "empty-icon" ]
-#    - type: Clothing
-#      sprite: Objects/Weapons/Guns/Basic/kinetic_accelerator.rsi
-#      quickEquip: false
-#      slots:
-#        - suitStorage
-#        - Belt
-#    - type: Gun
-#      fireRate: 0.5
-#      selectedMode: SemiAuto
-#      angleDecay: 45
-#      minAngle: 44
-#      maxAngle: 45
-#      availableModes:
-#        - SemiAuto
-#      soundGunshot:
-#        path: /Audio/Weapons/Guns/Gunshots/kinetic_accel.ogg
-#      projectileSpeed: 25
-#    - type: BallisticAmmoProvider
-#      whitelist:
-#        tags:
-#          - CartridgeRocket
-#      proto: CartridgeRocket
-#      capacity: 1
-#      soundInsert:
-#        path: /Audio/Weapons/Guns/MagIn/batrifle_magin.ogg
-#    - type: MagazineVisuals
-#      magState: mag
-#      steps: 2
-#      zeroVisible: false
-#    - type: Appearance
-
-# ammo
-- type: entity
-  id: BulletKineticTerraformerExplosive
-  name: explosive kinetic bolt
+  name: terraforming kinetic bolt
   parent: BaseBulletTrigger
   categories: [ HideSpawnMenu ]
   description: Get out of the way!
@@ -175,22 +58,22 @@
       impactEffect: BulletImpactEffectKinetic
       damage:
         types:
-          Blunt: 25
-          Structural: 30
+          Blunt: 1
+          Structural: 5
     # Short lifespan
     - type: TimedDespawn
       lifetime: 0.275 # roughly 6.5 tiles
     - type: GatheringProjectile
     - type: ExplodeOnTrigger
     - type: Explosive
-      explosionType: TerrainCharge
+      explosionType: TerraformCharge
       maxIntensity: 40
-      intensitySlope: 6
-      totalIntensity: 200
+      intensitySlope: 3
+      totalIntensity: 10
       maxTileBreak: 1
     - type: PointLight
       radius: 3.5
-      color: orange
+      color: blue
       energy: 0.5
     - type: RadarBlip
       color: "#44FFAA"
@@ -202,18 +85,3 @@
 
 
 
-- type: explosion
-  id: TerrainCharge
-  damagePerIntensity:
-    types:
-      Heat: 3
-      Blunt: 3
-      Piercing: 3
-      Terrain: 30
-  tileBreakChance: [ 0, 0.5, 1 ]
-  tileBreakIntensity: [ 0, 10, 30 ]
-  tileBreakRerollReduction: 20
-  lightColor: Orange
-  texturePath: /Textures/Effects/fire.rsi
-  fireStates: 3
-  temperature: 800
