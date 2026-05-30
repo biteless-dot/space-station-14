@@ -154,6 +154,18 @@
     - !type:BuyerAccessCondition
 
 - type: listing
+  id: VendorMiningWeaponProtoKineticTerraformer
+  productEntity: WeaponProtoKineticTerraformer
+  cost:
+    SalvageTicket: 400
+  categories:
+    - MiningEquipment
+  conditions:
+    - !type:ListingLimitedStockCondition
+      stock: 5
+    - !type:BuyerAccessCondition
+
+- type: listing
   id: VendorMiningPKAUpgradeDamage
   productEntity: PKAUpgradeDamage
   cost:
