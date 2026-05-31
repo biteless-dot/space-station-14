@@ -38,6 +38,7 @@ namespace Content.Client.RoundEnd
             var roundEndTabs = new TabContainer();
             roundEndTabs.AddChild(MakeRoundEndSummaryTab(gm, roundEnd, roundTimeSpan, roundId));
             roundEndTabs.AddChild(MakePlayerManifestTab(info));
+            roundEndTabs.AddChild(MakeRailroadCardSummaryTab(gm, roundEnd, roundTimeSpan, roundId));
 
             ContentsContainer.AddChild(roundEndTabs);
 
@@ -244,6 +245,92 @@ namespace Content.Client.RoundEnd
             playerManifestTab.AddChild(playerInfoContainerScrollbox);
 
             return playerManifestTab;
+        }
+
+        private BoxContainer MakeRailroadCardSummaryTab(string gamemode, string roundEnd, TimeSpan roundDuration, int roundId)
+        {
+            var railroadCardSummaryTab = new BoxContainer
+            {
+                Orientation = LayoutOrientation.Vertical,
+                Name = Loc.GetString("round-end-summary-window-railroad-card-summary-tab-title")
+            };
+
+            // <summary>
+            // Starlight-start: Search filter Box
+            // Search container for round end text
+            // </summary>
+            var searchContainer = new BoxContainer
+            {
+                Orientation = LayoutOrientation.Horizontal,
+                Margin = new Thickness(10, 10, 10, 5),
+                VerticalExpand = false,
+                HorizontalExpand = true
+            };
+
+            var searchLabel = new Label
+            {
+                Text = Loc.GetString("round-end-summary-window-search-label"),
+                MinSize = new Vector2(80, 0),
+                VerticalAlignment = VAlignment.Center
+            };
+
+            var searchInput = new LineEdit
+            {
+                PlaceHolder = Loc.GetString("round-end-summary-window-search-placeholder"),
+                HorizontalExpand = true,
+                MinHeight = 30
+            };
+
+            searchContainer.AddChild(searchLabel);
+            searchContainer.AddChild(searchInput);
+            railroadCardSummaryTab.AddChild(searchContainer);
+            // Starlight-end of Search container
+
+            var railroadCardSummaryContainerScrollbox = new ScrollContainer
+            {
+                VerticalExpand = true,
+                Margin = new Thickness(10)
+            };
+            var railroadCardSummaryContainer = new BoxContainer
+            {
+                Orientation = LayoutOrientation.Vertical
+            };
+
+            //Duration
+            var roundTimeLabel = new RichTextLabel();
+            roundTimeLabel.SetMarkup(Loc.GetString("round-end-summary-window-duration-label",
+                                                   ("hours", roundDuration.Hours),
+                                                   ("minutes", roundDuration.Minutes),
+                                                   ("seconds", roundDuration.Seconds)));
+            railroadCardSummaryContainer.AddChild(roundTimeLabel);
+
+            //Round end text
+            if (!string.IsNullOrEmpty(roundEnd))
+            {
+                var roundEndLabel = new RichTextLabel();
+                UpdateRoundEndTextForSearch(roundEndLabel, roundEnd, "");
+                railroadCardSummaryContainer.AddChild(roundEndLabel);
+
+                // Add dynamic search functionality
+                searchInput.OnTextChanged += (args) =>
+                {
+                    var isSearchDone = UpdateRoundEndTextForSearch(roundEndLabel, roundEnd, args.Text);
+                    // the return value is only interesting for us to know if the two labels should be visible or not
+                    if (isSearchDone)
+                    {
+                        gamemodeLabel.Visible = false;
+                        roundTimeLabel.Visible = false;
+                    } else {
+                        gamemodeLabel.Visible = true;
+                        roundTimeLabel.Visible = true;
+                    }
+                };
+            }
+
+            railroadCardSummaryContainerScrollbox.AddChild(railroadCardSummaryContainer);
+            railroadCardSummaryTab.AddChild(railroadCardSummaryContainerScrollbox);
+
+            return railroadCardSummaryTab;
         }
 
         private void populatePlayManifestList(BoxContainer playerInfoContainer, RoundEndMessageEvent.RoundEndPlayerInfo[] playersInfo)
