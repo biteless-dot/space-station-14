@@ -3,6 +3,7 @@ station-beacon-nanotrasen-representative = NTR
 station-beacon-blueshield-officer = BSO
 station-beacon-nanotrasen-career-trainer = NCT Office
 station-beacon-breakroom-cargo = Cargo Break Room
+station-beacon-mining = Mining
 station-beacon-breakroom-command = Command Break Room
 station-beacon-breakroom-engineering = Engineering Break Room
 station-beacon-nuclear-reactor = Nuclear Reactor

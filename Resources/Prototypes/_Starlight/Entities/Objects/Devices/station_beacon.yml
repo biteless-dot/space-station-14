@@ -49,6 +49,14 @@
   - type: NavMapBeacon
     defaultText: station-beacon-breakroom-cargo
 
+- type: entity
+  parent: DefaultStationBeaconSupply
+  id: DefaultStationBeaconMining
+  suffix: Mining
+  components:
+    - type: NavMapBeacon
+      defaultText: station-beacon-mining
+
 # Engineering
 - type: entity
   parent: DefaultStationBeaconEngineering
