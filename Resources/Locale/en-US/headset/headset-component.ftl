@@ -6,6 +6,11 @@ chat-radio-message-wrap = [color={$color}]{$channel} [bold]{$name}[/bold] {$verb
 # Starlight-edit: Languages
 chat-radio-message-wrap-bold = [color={$color}]{$channel} [bold]{$name}[/bold] {$verb}, "[/color][font="{$fontType}" size={$fontSize}][color={$languageColor}][bold]{$message}[/bold][/font][/color][color={$color}]"[/color]
 
+# RMC Edit
+# Which to use?
+#chat-radio-message-wrap = [color={$color}][font={$fontType} size={$fontSize}]{$channel} [bold]{$name}[/bold] {$verb}, "{$message}"[/font][/color]
+#chat-radio-message-wrap-bold = [color={$color}][font={$fontType} size={$fontSize}]{$channel} [bold]{$name}[/bold] {$verb}, [bold]"{$message}"[/bold][/font][/color]
+
 examine-headset-default-channel = Use {$prefix} for the default channel ([color={$color}]{$channel}[/color]).
 
 chat-radio-common = Common

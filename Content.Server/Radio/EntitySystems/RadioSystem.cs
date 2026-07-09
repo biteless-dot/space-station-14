@@ -182,6 +182,16 @@ public sealed partial class RadioSystem : EntitySystem
 
         _chime.TryGetSenderHeadsetChime(messageSource, out var chime);
 
+        // MIKEY - add verbs like SplittingStacks? See Content.Shared/Stacks/SharedStackSystem.cs
+        //
+        // RMC14 increase font size
+        int radioFontSize = speech.FontSize;
+        if (TryComp<WearingHeadsetComponent>(messageSource, out var wearingHeadset) &&
+            TryComp<HeadsetComponent>(wearingHeadset.Headset, out var headsetComp))
+        {
+            radioFontSize += headsetComp.RadioTextIncrease ?? 0;
+        }
+
         var wrappedMessage = WrapRadioMessage(messageSource, channel, selectedName, content, language, false);
 
         // most radios are relayed to chat, so lets parse the chat message beforehand
@@ -477,6 +487,8 @@ public sealed partial class RadioSystem : EntitySystem
                 ("color", channel.Color),
                 ("languageColor", languageColor),
                 ("fontType", fonttype),
+                // replace language.speech ??
+                // ("fontSize", radioFontSize), // RMC14
                 ("fontSize", language.Speech.FontSize ?? speech.FontSize),
                 ("verb", Loc.GetString(verbId)),
                 ("channel", $"\\[{channel.LocalizedName}\\]"),

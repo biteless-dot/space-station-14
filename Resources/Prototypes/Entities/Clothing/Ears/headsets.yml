@@ -127,6 +127,8 @@
   - type: RadioChime
     sound:
       path: /Audio/_Starlight/Effects/Radio/captain.ogg
+  - type: Headset
+    radioTextIncrease: 4
 
 - type: entity
   parent: ClothingHeadset
