@@ -1,4 +1,5 @@
-<!-- Review the Starlight Docs for more information on filling out your PR: https://docs.starlight.network/doc/how-to-fill-pr-description-4lSI520Sul -->
+<!-- Review the Starlight Docs for more information on filling out your PR:
+https://docs.starlight.network/s/3e09297d-1b39-4fc3-8cdc-2e23ff10aa8f/doc/how-to-fill-pr-description-4lSI520Sul -->
 ## Short description
 <!-- What do you propose to change with your PR? -->
 
