@@ -14,7 +14,7 @@ public sealed class RadioCommand : ToolshedCommand
 
     [CommandImplementation("addcustom")]
     public EntityUid Create<T>([PipedArgument] EntityUid uid, string id,
-        string name, char keycode, int frequency, string hex, bool longRange, bool ensure = false) where T : ISupportsCustomChannels, IComponent, new()
+        string name, string keycode, int frequency, string hex, bool longRange, bool ensure = false) where T : ISupportsCustomChannels, IComponent, new()
     {
         T? comp;
         if (ensure) comp = EnsureComp<T>(uid);
@@ -35,7 +35,7 @@ public sealed class RadioCommand : ToolshedCommand
 
     [CommandImplementation("addcustom")]
     public IEnumerable<EntityUid> Create<T>([PipedArgument] IEnumerable<EntityUid> uid, string id,
-        string name, char keycode, int frequency, string hex, bool longRange, bool ensure = false)
+        string name, string keycode, int frequency, string hex, bool longRange, bool ensure = false)
         where T : ISupportsCustomChannels, IComponent, new() => uid.Select(x =>
         Create<T>(x, id, name, keycode, frequency, hex, longRange, ensure));
 

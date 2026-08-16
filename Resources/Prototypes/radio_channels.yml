@@ -1,7 +1,7 @@
 - type: radioChannel
   id: Common
   name: chat-radio-common
-  keycode: ";"
+  keycode: 'common'
   frequency: 1459
   color: "#2cdb2c"
   icon: # Starlight
@@ -11,7 +11,7 @@
 - type: radioChannel
   id: CentCom
   name: chat-radio-centcom
-  keycode: 'y'
+  keycode: 'cent'
   frequency: 1337
   color: "#86d420" # Starlight
   longRange: true

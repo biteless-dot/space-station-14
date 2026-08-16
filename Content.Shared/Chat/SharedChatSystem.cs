@@ -74,7 +74,7 @@ public abstract partial class SharedChatSystem : EntitySystem
     /// <summary>
     /// Cache of the keycodes for faster lookup.
     /// </summary>
-    private FrozenDictionary<char, RadioChannelPrototype> _keyCodes = default!;
+    private FrozenDictionary<string, RadioChannelPrototype> _keyCodes = default!; // Starlight char->string
 
     public override void Initialize()
     {
@@ -99,8 +99,8 @@ public abstract partial class SharedChatSystem : EntitySystem
     private void CacheRadios()
     {
         _keyCodes = _prototypeManager.EnumeratePrototypes<RadioChannelPrototype>()
-            .Where(x => x.KeyCode != '\0') // Starlight - Check if KeyCode is not the default null character
-            .ToFrozenDictionary(x => x.KeyCode);
+            .Where(x => !string.IsNullOrEmpty(x.KeyCode)) // Starlight char->string
+            .ToFrozenDictionary(x => x.KeyCode, StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -149,11 +149,20 @@ public abstract partial class SharedChatSystem : EntitySystem
         if (!(input.StartsWith(RadioChannelPrefix) || input.StartsWith(RadioChannelAltPrefix)))
             return;
 
-        if (!_keyCodes.TryGetValue(char.ToLower(input[1]), out _))
+        var keycodeInput = input[1..];
+        TryGetLongestKeycode(_keyCodes.Keys, keycodeInput, out var keycode);
+
+        if (TryGetCustomChannelsFromKeyCode(source, keycodeInput, out var customChannels)
+            && customChannels[0].Keycode.Length > keycode.Length)
+        {
+            keycode = customChannels[0].Keycode;
+        }
+
+        if (keycode.Length == 0)
             return;
 
-        prefix = input[..2];
-        output = input[2..];
+        prefix = input[..(keycode.Length + 1)];
+        output = input[(keycode.Length + 1)..];
     }
 
     /// <summary>
@@ -199,31 +208,48 @@ public abstract partial class SharedChatSystem : EntitySystem
             return true;
         }
 
-        var channelKey = input[1];
-        channelKey = char.ToLower(channelKey);
-        output = SanitizeMessageCapital(input[2..].TrimStart());
+        var keycodeInput = input[1..];
+        var protoResult = TryGetChannelsFromKeyCode(source, keycodeInput, out var channelMatches);
+        var customResult = TryGetCustomChannelsFromKeyCode(source, keycodeInput, out var customChannelMatches);
+        var prototypeKeycode = channelMatches.FirstOrDefault()?.KeyCode;
+        var customKeycode = customChannelMatches.FirstOrDefault()?.Keycode;
 
-        if (channelKey == DefaultChannelKey)
+        if (customKeycode?.Length > prototypeKeycode?.Length)
+            protoResult = false;
+        else if (prototypeKeycode?.Length > customKeycode?.Length)
+            customResult = false;
+
+        var matchedKeycode = protoResult ? prototypeKeycode : customKeycode;
+
+        if (string.IsNullOrEmpty(matchedKeycode) && char.ToLower(input[1]) == DefaultChannelKey)
         {
+            output = SanitizeMessageCapital(input[2..].TrimStart());
             var ev = new GetDefaultRadioChannelEvent();
             RaiseLocalEvent(source, ev);
 
-            //Starlight begin
             if (ev.Channel != null)
                 if (!_prototypeManager.TryIndex(ev.Channel, out channel))
-                {
                     TryGetCustomChannel(source, ev.Channel, out customChannel);
-                }
-            //Starlight end
+
             return true;
         }
 
-        // Starlight begin
-        var protoResult = TryGetChannelsFromKeyCode(source, channelKey, out var channelMatches);
-        var customResult = TryGetCustomChannelsFromKeyCode(source, channelKey, out var customChannelMatches);
+        if (string.IsNullOrEmpty(matchedKeycode))
+        {
+            if (_net.IsServer)
+                _popup.PopupEntity(Loc.GetString("chat-manager-no-such-channel", ("key", keycodeInput)), source, source);
+
+            return true;
+        }
+
+        var messageStart = matchedKeycode.Length + 1;
+        output = SanitizeMessageCapital(input[messageStart..].TrimStart());
+        var selectorIndex = messageStart;
+
         RadioChannelPrototype? protoMatch = null;
-        foreach (var match in channelMatches.Where(p => p.KeyCode == channelKey))
+        foreach (var match in channelMatches)
             protoMatch = match;
+
         if (protoResult && !customResult)
         {
             if (protoMatch is not null)
@@ -235,12 +261,12 @@ public abstract partial class SharedChatSystem : EntitySystem
 
         if (customResult && !protoResult)
         {
-            if (customChannelMatches.Count == 1 || input.Length < 3)
+            if (customChannelMatches.Count == 1 || input.Length <= selectorIndex)
             {
                 customChannel = customChannelMatches.First();
                 return true;
             }
-            var idx = input[2].ToString();
+            var idx = input[selectorIndex].ToString();
             var isNum = int.TryParse(idx, out var num);
             if (!isNum || num == 0 || !customChannelMatches.TryGetValue(num, out var match))
             {
@@ -248,19 +274,19 @@ public abstract partial class SharedChatSystem : EntitySystem
                 return true;
             }
 
-            output = SanitizeMessageCapital(input[3..].TrimStart());
+            output = SanitizeMessageCapital(input[(selectorIndex + 1)..].TrimStart());
             customChannel = match;
             return true;
         }
 
         if (customResult && protoResult)
         {
-            if (input.Length < 3 && protoMatch is not null)
+            if (input.Length <= selectorIndex && protoMatch is not null)
             {
                 channel = protoMatch;
                 return true;
             }
-            var idx = input[2].ToString();
+            var idx = input[selectorIndex].ToString();
             var isNum = int.TryParse(idx, out var num);
             if (!isNum)
             {
@@ -273,11 +299,10 @@ public abstract partial class SharedChatSystem : EntitySystem
                 channel = protoMatch;
                 return true;
             }
-            output = SanitizeMessageCapital(input[3..].TrimStart());
+            output = SanitizeMessageCapital(input[(selectorIndex + 1)..].TrimStart());
             customChannel = match;
             return true;
         }
-        if(_net.IsServer) _popup.PopupEntity(Loc.GetString("chat-manager-no-such-channel", ("key", channelKey)), source, source);
         return true;
         //Starlight end
     }
@@ -312,20 +337,22 @@ public abstract partial class SharedChatSystem : EntitySystem
         return false;
     }
 
-    private bool TryGetCustomChannelsFromKeyCode(EntityUid source, char keycode,
+    private bool TryGetCustomChannelsFromKeyCode(EntityUid source, string keycodeInput,
         out List<CustomRadioChannelData> customChannels)
     {
         customChannels = [];
         if (TryComp<WearingHeadsetComponent>(source, out var wearingHeadset))
             if (TryComp<ActiveRadioComponent>(wearingHeadset.Headset, out var headsetRadio))
-                customChannels.AddRange(headsetRadio.CustomChannels.Where(channel => channel.Keycode == keycode));
+                customChannels.AddRange(headsetRadio.CustomChannels);
 
         if (TryComp<IntrinsicRadioTransmitterComponent>(source, out var radio))
-            customChannels.AddRange(radio.CustomChannels.Where(channel => channel.Keycode == keycode));
-        return customChannels.Count > 0;
+            customChannels.AddRange(radio.CustomChannels);
+
+        customChannels = GetLongestKeycodeMatches(customChannels, channel => channel.Keycode, keycodeInput);
+        return customChannels.Count != 0;
     }
 
-    private bool TryGetChannelsFromKeyCode(EntityUid source, char keycode,
+    private bool TryGetChannelsFromKeyCode(EntityUid source, string keycodeInput,
         out List<RadioChannelPrototype> presentChannels)
     {
         presentChannels = [];
@@ -333,15 +360,41 @@ public abstract partial class SharedChatSystem : EntitySystem
             if (TryComp<ActiveRadioComponent>(wearingHeadset.Headset, out var headsetRadio))
                 presentChannels.AddRange(headsetRadio.Channels
                     .Where(channel => _prototypeManager.HasIndex(channel))
-                    .Select(proto => _prototypeManager.Index(proto))
-                    .Where(channel => channel.KeyCode == keycode));
+                    .Select(proto => _prototypeManager.Index(proto)));
 
         if (TryComp<IntrinsicRadioTransmitterComponent>(source, out var radio))
             presentChannels.AddRange(radio.Channels
                 .Where(channel => _prototypeManager.HasIndex(channel))
-                .Select(proto => _prototypeManager.Index(proto))
-                .Where(channel => channel.KeyCode == keycode));
-        return presentChannels.Count > 0;
+                .Select(proto => _prototypeManager.Index(proto)));
+
+        presentChannels = GetLongestKeycodeMatches(presentChannels, channel => channel.KeyCode, keycodeInput);
+        return presentChannels.Count != 0;
+    }
+
+    private static bool TryGetLongestKeycode(IEnumerable<string> keycodes, string input, out string keycode)
+    {
+        keycode = keycodes
+            .Where(code => input.StartsWith(code, StringComparison.OrdinalIgnoreCase))
+            .MaxBy(code => code.Length) ?? string.Empty;
+        return keycode.Length != 0;
+    }
+
+    private static List<T> GetLongestKeycodeMatches<T>(
+        IEnumerable<T> channels,
+        Func<T, string> getKeycode,
+        string input)
+    {
+        var matches = channels
+            .Where(channel =>
+            {
+                var keycode = getKeycode(channel);
+                return !string.IsNullOrEmpty(keycode)
+                       && input.StartsWith(keycode, StringComparison.OrdinalIgnoreCase);
+            })
+            .ToList();
+
+        var longestKeycodeLength = matches.Count == 0 ? 0 : matches.Max(channel => getKeycode(channel).Length);
+        return matches.Where(channel => getKeycode(channel).Length == longestKeycodeLength).ToList();
     }
     //Starlight end
 

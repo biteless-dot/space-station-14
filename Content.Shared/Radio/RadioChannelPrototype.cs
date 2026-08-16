@@ -19,10 +19,10 @@ public sealed partial class RadioChannelPrototype : IPrototype
     public string LocalizedName => Loc.GetString(Name);
 
     /// <summary>
-    /// Single-character prefix to determine what channel a message should be sent to.
+    /// Prefix to determine what channel a message should be sent to. // Starlight char->string
     /// </summary>
     [DataField("keycode")]
-    public char KeyCode { get; private set; } = '\0';
+    public string KeyCode { get; private set; } = string.Empty; // Starlight char->string
 
     [DataField("frequency")]
     public int Frequency { get; private set; } = 0;
